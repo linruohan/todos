@@ -3,15 +3,15 @@ use std::str::FromStr;
 use crate::enums::{RecurrencyEndType, RecurrencyType};
 use chrono::NaiveDateTime;
 pub struct DueDate {
-    date: String,
-    timezone: String,
-    recurrency_week: String,
-    is_recurring: bool,
-    recurrency_type: RecurrencyType,
-    recurrency_interval: i32,
-    recurrency_count: i32,
-    recurrency_end: String,
-    recurrency_supported: bool,
+    pub date: String,
+    pub timezone: String,
+    pub recurrency_weeks: String,
+    pub is_recurring: bool,
+    pub recurrency_type: RecurrencyType,
+    pub recurrency_interval: i32,
+    pub recurrency_count: i32,
+    pub recurrency_end: String,
+    pub recurrency_supported: bool,
 }
 impl DueDate {
     pub fn datetime(&self) -> NaiveDateTime {
@@ -24,7 +24,7 @@ impl DueDate {
         NaiveDateTime::from_str(&self.recurrency_end).unwrap()
     }
     pub fn has_weeks(&self) -> bool {
-        self.recurrency_week != ""
+        self.recurrency_weeks != ""
     }
     pub fn end_type(&self) -> RecurrencyEndType {
         if self.recurrency_end != "" {

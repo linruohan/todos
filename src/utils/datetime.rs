@@ -1,7 +1,12 @@
 use std::str::FromStr;
 
 use anyhow::Result;
-use chrono::{Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, ParseError};
+use chrono::{
+    Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, ParseError, Timelike,
+};
+use diesel::{dsl::date, sql_types::Json};
+
+use crate::{enums::RecurrencyType, objects::DueDate};
 const EMPTY_DATETIME: NaiveDateTime = chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc();
 pub struct DateTime {}
 impl DateTime {
@@ -18,52 +23,68 @@ impl DateTime {
         }
     }
 
-    // pub fn get_relative_date_from_date ( datetime:NaiveDateTime) ->&str{
-    //     if (is_today(datetime)) {
-    //         returned = "Today";
-    //     } else if (is_tomorrow(datetime)) {
-    //         returned = _("Tomorrow");
-    //     } else if (is_yesterday (datetime)) {
-    //         returned = _("Yesterday");
-    //     } else {
-    //         returned = get_default_date_format_from_date (datetime);
-    //     }
-
-    //     if (has_time (datetime)) {
-    //         returned = "%s %s".printf (returned, datetime.format (get_default_time_format ()));
-    //     }
-
-    //     return returned;
-    // }
+    pub fn get_relative_date_from_date(&self, datetime: NaiveDateTime) -> String {
+        let mut returned = "";
+        let format_str = self.get_default_date_format_from_date(datetime).clone();
+        if (self.is_today(datetime)) {
+            returned = "Today";
+        } else if self.is_tomorrow(datetime) {
+            returned = "Tomorrow";
+        } else if self.is_yesterday(datetime) {
+            returned = "Yesterday";
+        } else {
+            returned = format_str.as_str();
+        }
+        if self.has_time(datetime) {
+            return format!(
+                "{} {}",
+                returned,
+                datetime.format(self.get_default_time_format())
+            );
+        }
+        return returned.to_string();
+    }
 
     // pub static string get_relative_datetime (GLib.DateTime datetime) {
     //     return Granite.DateTime.get_relative_datetime (datetime);
     // }
 
-    // pub static string days_left (GLib.DateTime datetime, bool show_today = false) {
-    //     string return_value = "";
-    //     let days = datetime.difference (new GLib.DateTime.now_local ()) / TimeSpan.DAY;
+    pub fn days_left(&self, datetime: NaiveDateTime, show_today: bool) -> String {
+        let days = (datetime - Local::now().naive_local()).num_days();
+        if self.is_today(datetime) {
+            return if show_today {
+                "Today".to_string()
+            } else {
+                "".to_string()
+            };
+        } else if self.is_overdue(datetime) {
+            return format!(
+                "{} {} ago",
+                (days * -1).to_string(),
+                if days > 1 { "days" } else { "day" }
+            );
+        } else {
+            return format!(
+                "{} {} left",
+                (days + 1).to_string(),
+                if days > 1 { "days" } else { "day" }
+            );
+        }
+        return "".to_string();
+    }
 
-    //     if (is_today (datetime)) {
-    //         return_value = show_today ? _("Today") : "";
-    //     } else if (is_overdue (datetime)) {
-    //         return_value = _("%s %s ago".printf ((days * -1).to_string (), days > 1 ? _("days") : _("day")));
-    //     } else {
-    //         return_value = _("%s %s left".printf ((days + 1).to_string (), days > 1 ? _("days") : _("day")));
-    //     }
+    pub fn get_default_time_format(&self) -> &str {
+        if self.is_clock_format_12h() {
+            "%I:%M"
+        } else {
+            "%H:%M"
+        }
+    }
 
-    //     return return_value;
-    // }
-
-    // pub static string get_default_time_format () {
-    //     return Granite.DateTime.get_default_time_format (
-    //         is_clock_format_12h (), false
-    //     );
-    // }
-
-    // pub static bool is_clock_format_12h () {
-    //     return Services.Settings.get_default ().settings.get_string ("clock-format").contains ("12h");
-    // }
+    pub fn is_clock_format_12h(&self) -> bool {
+        // return Services.Settings.get_default ().settings.get_string ("clock-format").contains ("12h");
+        false
+    }
 
     pub fn is_yesterday(&self, date: NaiveDateTime) -> bool {
         return self.is_same_day(date, Local::now().naive_local() - Duration::days(1));
@@ -73,42 +94,36 @@ impl DateTime {
         return day1.year() == day2.year() && day1.day() == day2.day();
     }
 
-    // pub static bool is_overdue (GLib.DateTime date) {
-    //     if (get_date_only (date).compare (get_date_only (new DateTime.now_local ())) == -1) {
-    //         return true;
-    //     }
+    pub fn is_overdue(&self, date: NaiveDateTime) -> bool {
+        // date在今天之前，说明是过期了
+        if date < Local::now().naive_local() {
+            return true;
+        }
+        return false;
+    }
 
-    //     return false;
-    // }
+    pub fn get_calendar_icon(&self, date: NaiveDateTime) -> &str {
+        if self.is_today(date) {
+            return "planner-today";
+        }
+        return "planner-scheduled";
+    }
 
-    // pub static string get_calendar_icon (GLib.DateTime date) {
-    //     if (is_today (date)) {
-    //         return "planner-today";
-    //     } else {
-    //         return "planner-scheduled";
-    //     }
-    // }
+    pub fn parse_todoist_recurrency(duedate: DueDate, object: Json) {
+        // if (object.has_member("lang") && object.get_string_member("lang") != "en") {
+        //     duedate.recurrency_supported = false;
+        // }
+    }
 
-    // pub static void parse_todoist_recurrency (Objects.DueDate duedate, Json.Object object) {
-    //     if (object.has_member ("lang") && object.get_string_member ("lang") != "en") {
-    //         duedate.recurrence_supported = false;
-    //         return;
-    //     }
-    // }
-
-    // pub static bool has_time (GLib.DateTime datetime) {
-    //     if (datetime == null) {
-    //         return false;
-    //     }
-
-    //     bool returned = true;
-
-    //     if (datetime.get_hour () == 0 && datetime.get_minute () == 0 && datetime.get_second () == 0) {
-    //         returned = false;
-    //     }
-
-    //     return returned;
-    // }
+    pub fn has_time(&self, datetime: NaiveDateTime) -> bool {
+        if (datetime == EMPTY_DATETIME) {
+            return false;
+        }
+        if (datetime.hour() == 0 && datetime.minute() == 0 && datetime.second() == 0) {
+            return false;
+        }
+        return true;
+    }
 
     pub fn is_today(&self, date: NaiveDateTime) -> bool {
         if date == EMPTY_DATETIME {
@@ -229,22 +244,20 @@ impl DateTime {
         return false;
     }
 
-    // pub static bool is_next_x_week (GLib.DateTime date, int days) {
-    //     let current_date = new GLib.DateTime.now_local ();
-    //     let end_date = current_date.add_days (days);
+    pub fn is_next_x_week(&self, date: NaiveDateTime, days: i64) -> bool {
+        let current_date = Local::now().naive_local();
+        let end_date = current_date + Duration::days(days);
 
-    //     if (date.compare (format_date (current_date)) >= 0 &&
-    //         date.compare (format_date (end_date)) <= 0) {
-    //         return true;
-    //     }
+        if date >= current_date && date <= end_date {
+            return true;
+        }
+        return false;
+    }
 
-    //     return false;
-    // }
-
-    // pub static bool is_this_month (GLib.DateTime date) {
-    //     let current_date = new GLib.DateTime.now_local ();
-    //     return current_date.get_month () == date.get_month () && current_date.get_year () == date.get_year ();
-    // }
+    pub fn is_this_month(&self, date: NaiveDateTime) -> bool {
+        let current_date = Local::now().naive_local();
+        return current_date.month() == date.month() && current_date.year() == date.year();
+    }
 
     // pub static GLib.DateTime next_recurrency (GLib.DateTime datetime, Objects.DueDate duedate) {
     //     GLib.DateTime returned = datetime;
@@ -270,24 +283,29 @@ impl DateTime {
     //     return returned;
     // }
 
-    // pub static int get_next_day_of_week_from_recurrency_week (GLib.DateTime datetime, Objects.DueDate duedate) {
-    //     string[] weeks = duedate.recurrency_weeks.split (",");
-    //     int day_of_week = datetime.get_day_of_week ();
-    //     int index = 0;
+    pub fn get_next_day_of_week_from_recurrency_week(
+        datetime: NaiveDateTime,
+        duedate: DueDate,
+    ) -> Option<i32> {
+        let weeks: Vec<&str> = duedate.recurrency_weeks.split(",").collect();
+        let day_of_week = datetime.weekday().num_days_from_monday() as i32;
+        for week in &weeks {
+            if let Ok(week) = week.parse::<i32>() {
+                if week > day_of_week {
+                    return Some(week);
+                }
+            } else {
+                eprintln!("failed to parse week:{week}");
+            }
+        }
 
-    //     for (int i = 0; i < weeks.length ; i++) {
-    //         if (day_of_week <= int.parse (weeks[i])) {
-    //             index = i;
-    //             break;
-    //         }
-    //     }
-
-    //     if (index > weeks.length - 1) {
-    //         index = 0;
-    //     }
-
-    //     return int.parse (weeks[index]);
-    // }
+        if let Some(first_week_str) = weeks.get(0) {
+            if let Ok(first_week) = first_week_str.parse::<i32>() {
+                return Some(first_week);
+            }
+        }
+        None
+    }
 
     // pub static GLib.DateTime next_recurrency_week (GLib.DateTime datetime, Objects.DueDate duedate, bool user = false) {
     //     string[] weeks = duedate.recurrency_weeks.split (","); // [1, 2, 3]
@@ -319,129 +337,133 @@ impl DateTime {
     //     return datetime.add_days (days).add_days (recurrency_interval);
     // }
 
-    // pub static string get_recurrency_weeks (RecurrencyType recurrency_type, int recurrency_interval,
-    //     string recurrency_weeks, string end = "") {
-    //     string returned = recurrency_type.to_friendly_string (recurrency_interval);
+    pub fn get_recurrency_weeks(
+        recurrency_type: RecurrencyType,
+        recurrency_interval: i32,
+        recurrency_weeks: String,
+        end: String,
+    ) -> String {
+        let mut returned = recurrency_type.to_friendly_string(recurrency_interval);
 
-    //     if (recurrency_type == RecurrencyType.EVERY_WEEK &&
-    //         recurrency_weeks.split (",").length > 0) {
-    //         string weeks = "";
-    //         if (recurrency_weeks.contains ("1")) {
-    //             weeks += _("Mo,");
-    //         }
+        if recurrency_type == RecurrencyType::EveryWeek && !recurrency_weeks.is_empty() {
+            let mut weeks = String::new();
 
-    //         if (recurrency_weeks.contains ("2")) {
-    //             weeks += _("Tu,");
-    //         }
+            if recurrency_weeks.contains("1") {
+                weeks.push_str("Mo,");
+            }
 
-    //         if (recurrency_weeks.contains ("3")) {
-    //             weeks += _("We,");
-    //         }
+            if recurrency_weeks.contains("2") {
+                weeks.push_str("Tu,");
+            }
 
-    //         if (recurrency_weeks.contains ("4")) {
-    //             weeks += _("Th,");
-    //         }
+            if recurrency_weeks.contains("3") {
+                weeks.push_str("We,");
+            }
 
-    //         if (recurrency_weeks.contains ("5")) {
-    //             weeks += _("Fr,");
-    //         }
+            if recurrency_weeks.contains("4") {
+                weeks.push_str("Th,");
+            }
 
-    //         if (recurrency_weeks.contains ("6")) {
-    //             weeks += _("Sa,");
-    //         }
+            if recurrency_weeks.contains("5") {
+                weeks.push_str("Fr,");
+            }
 
-    //         if (recurrency_weeks.contains ("7")) {
-    //             weeks += _("Su,");
-    //         }
+            if recurrency_weeks.contains("6") {
+                weeks.push_str("Sa,");
+            }
 
-    //         weeks = weeks.slice (0, -1);
-    //         returned = "%s (%s)".printf (returned, weeks);
-    //     }
+            if recurrency_weeks.contains("7") {
+                weeks.push_str("Su,");
+            }
 
-    //     return returned + " " + end;
-    // }
+            if !weeks.is_empty() {
+                weeks.pop(); // Remove the trailing comma
+            }
 
-    // pub static GLib.DateTime get_today_format_date () {
-    //     return get_date_only (new DateTime.now_local ());
-    // }
+            returned = format!("{} ({})", returned, weeks);
+        }
+        format!("{} {}", returned, end)
+    }
 
-    // pub static GLib.DateTime get_date_only (GLib.DateTime date) {
-    //     return new DateTime.local (
-    //         date.get_year (),
-    //         date.get_month (),
-    //         date.get_day_of_month (),
-    //         0,
-    //         0,
-    //         0
-    //     );
-    // }
+    pub fn get_today_format_date(&self) -> NaiveDateTime {
+        return self.get_date_only(Local::now().naive_local());
+    }
 
-    // pub static string get_default_date_format_from_date (GLib.DateTime? date) {
-    //     if (date == null) {
-    //         return "";
-    //     }
+    pub fn get_date_only(&self, date: NaiveDateTime) -> NaiveDateTime {
+        NaiveDateTime::new(date.date(), NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+    }
 
-    //     let format = date.format (Granite.DateTime.get_default_date_format (
-    //         false,
-    //         true,
-    //         date.get_year () != new GLib.DateTime.now_local ().get_year ()
-    //     ));
-    //     return format;
-    // }
+    pub fn get_default_date_format_from_date(&self, date: NaiveDateTime) -> String {
+        let year = if date.year() == Local::now().year() {
+            ""
+        } else {
+            "%Y-"
+        };
+        format!("{}%m-%d %p", year)
+    }
 
-    // pub static string get_todoist_datetime_format (GLib.DateTime date) {
-    //     string returned = "";
+    pub fn get_todoist_datetime_format(&self, date: NaiveDateTime) -> String {
+        if (self.has_time(date)) {
+            return format!(
+                "{}T{}",
+                date.format("%F").to_string(),
+                date.format("%T").to_string()
+            );
+        } else {
+            return date.format("%F").to_string();
+        }
 
-    //     if (has_time (date)) {
-    //         returned = date.format ("%F") + "T" + date.format ("%T");
-    //     } else {
-    //         returned = date.format ("%F");
-    //     }
+        return "".to_string();
+    }
 
-    //     return returned;
-    // }
+    pub fn has_time_from_string(&self, date: NaiveDateTime) -> bool {
+        return self.has_time(date);
+    }
 
-    // pub static bool has_time_from_string (string date) {
-    //     return has_time (new GLib.DateTime.from_iso8601 (date, new GLib.TimeZone.local ()));
-    // }
+    pub fn get_days_of_month(index: i32, year_nav: i32) -> i32 {
+        if ((index == 1)
+            || (index == 3)
+            || (index == 5)
+            || (index == 7)
+            || (index == 8)
+            || (index == 10)
+            || (index == 12))
+        {
+            return 31;
+        } else {
+            if (index == 2) {
+                if (year_nav % 4 == 0) {
+                    return 29;
+                } else {
+                    return 28;
+                }
+            } else {
+                return 30;
+            }
+        }
+    }
 
-    // pub static int get_days_of_month (int index, int year_nav) {
-    //     if ((index == 1) || (index == 3) || (index == 5) || (index == 7) || (index == 8) || (index == 10) || (index == 12)) { // vala-lint=line-length
-    //         return 31;
-    //     } else {
-    //         if (index == 2) {
-    //             if (year_nav % 4 == 0) {
-    //                 return 29;
-    //             } else {
-    //                 return 28;
-    //             }
-    //         } else {
-    //             return 30;
-    //         }
-    //     }
-    // }
+    pub fn get_start_of_month(&self, date: NaiveDateTime) -> NaiveDateTime {
+        if date == EMPTY_DATETIME {
+            let date = Local::now().naive_local();
+        }
+        let date1 = NaiveDate::from_ymd_opt(date.year(), date.month(), 1).unwrap();
+        let time1 = NaiveTime::from_hms_opt(0, 0, 0).unwrap();
+        NaiveDateTime::new(date1, time1)
+    }
 
-    // pub static GLib.DateTime get_start_of_month (owned GLib.DateTime? date = null) {
-    //     if (date == null) {
-    //         date = new GLib.DateTime.now_local ();
-    //     }
-
-    //     return new GLib.DateTime.local (date.get_year (), date.get_month (), 1, 0, 0, 0);
-    // }
-
-    // pub static bool is_current_month (GLib.DateTime date) {
-    //     let now = new GLib.DateTime.now_local ();
-
-    //     if (date.get_year () == now.get_year ()) {
-    //         if (date.get_month () == now.get_month ()) {
-    //             return true;
-    //         } else {
-    //             return false;
-    //         }
-    //     } else {
-    //         return false;
-    //     }
-    // }
+    pub fn is_current_month(&self, date: NaiveDateTime) -> bool {
+        let now = Local::now().naive_local();
+        if (date.year() == now.year()) {
+            if (date.month() == now.month()) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 
     // /**
     //  * Converts the given ICal.Time to a GLib.DateTime, represented in the

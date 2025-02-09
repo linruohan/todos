@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, PartialEq, Eq)]
 pub enum RecurrencyType {
     MINUTELY,
     HOURLY,
