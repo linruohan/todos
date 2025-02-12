@@ -3,33 +3,24 @@ use std::collections::HashMap;
 use super::FilterItem;
 use uuid::Uuid;
 
-use crate::BaseObject;
+use crate::{BaseObject, objects::BaseTrait};
 pub struct AllItems {
-    id: String,
-    name: String,
-    keywords: String,
-    icon_name: String,
-    view_id: String,
-    filters: HashMap<String, FilterItem>, // Changed to Vec<FilterType> to fix the error.
+    pub base: BaseObject,
 }
 
 impl AllItems {
     pub fn get_default(&self) -> AllItems {
         AllItems {
-            id: Uuid::new_v4().to_string(),
-            name: "All Tasks".to_string(),
-            keywords: format!("{};{}", "all tasks", "all"),
-            icon_name: "check-round-outline-symbolic".to_string(),
-            view_id: "all-items-view".to_string(),
-            filters: HashMap::new(), // Initialize with an empty vector or default filters.
+            base: BaseObject::new(
+                "All Tasks".to_string(),
+                format!("{};{}", "all tasks", "all"),
+                "check-round-outline-symbolic".to_string(),
+                "all-items-view".to_string(),
+            ),
         }
     }
 }
-impl BaseObject for AllItems {
-    fn filters(&self) -> HashMap<String, FilterItem> {
-        self.filters.clone()
-    }
-
+impl BaseTrait for AllItems {
     fn deleted(&self) {
         todo!()
     }
@@ -46,15 +37,7 @@ impl BaseObject for AllItems {
         todo!()
     }
 
-    fn id_string(&self) -> String {
-        todo!()
-    }
-
-    fn loading(&self, value: bool) -> bool {
-        todo!()
-    }
-
-    fn sensitive(&self, value: bool) -> bool {
+    fn loading(&self) -> bool {
         todo!()
     }
 
@@ -62,23 +45,11 @@ impl BaseObject for AllItems {
         todo!()
     }
 
+    fn sensitive(&self) -> bool {
+        todo!()
+    }
+
     fn sensitive_change(&self) {
-        todo!()
-    }
-
-    fn view_id(&self) {
-        todo!()
-    }
-
-    fn object_type(&self) -> crate::enums::ObjectType {
-        todo!()
-    }
-
-    fn object_type_string(&self) -> String {
-        todo!()
-    }
-
-    fn column_order_name(&self) -> String {
         todo!()
     }
 

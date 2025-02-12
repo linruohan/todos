@@ -1,7 +1,7 @@
 use super::Project;
 
-pub struct Item {}
-impl Item {
+pub struct Section {}
+impl Section {
     pub(crate) fn project(&self) -> Project {
         todo!()
     }

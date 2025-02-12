@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
+use crate::{enums::RecurrencyType, objects::DueDate};
 use anyhow::Result;
 use chrono::{
     Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, ParseError, Timelike,
 };
+use chrono_humanize::{Accuracy, HumanTime};
 use diesel::{dsl::date, sql_types::Json};
-
-use crate::{enums::RecurrencyType, objects::DueDate};
 const EMPTY_DATETIME: NaiveDateTime = chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc();
 pub struct DateTime {}
 impl DateTime {
@@ -45,9 +45,12 @@ impl DateTime {
         return returned.to_string();
     }
 
-    // pub static string get_relative_datetime (GLib.DateTime datetime) {
-    //     return Granite.DateTime.get_relative_datetime (datetime);
-    // }
+    pub fn get_relative_datetime(&self, datetime: NaiveDateTime) -> String {
+        let now = Local::now().naive_local();
+
+        let human_time = HumanTime::from(now - datetime);
+        human_time.to_text_en(Accuracy::Rough, chrono_humanize::Tense::Past)
+    }
 
     pub fn days_left(&self, datetime: NaiveDateTime, show_today: bool) -> String {
         let days = (datetime - Local::now().naive_local()).num_days();

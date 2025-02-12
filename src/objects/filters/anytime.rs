@@ -3,34 +3,25 @@ use std::{any::Any, collections::HashMap};
 use uuid::Uuid;
 
 use super::FilterItem;
-use crate::BaseObject;
+use crate::{BaseObject, objects::BaseTrait};
 pub struct Anytime {
-    id: String,
-    name: String,
-    keywords: String,
-    icon_name: String,
-    view_id: String,
-    filters: HashMap<String, FilterItem>,
+    pub base: BaseObject,
 }
 
 impl Anytime {
     pub fn default() -> Anytime {
         Anytime {
-            name: "Anytime".to_string(),
-            keywords: format!("{};{};{}", "anytime", "filters", "no date"),
-            icon_name: "grid-large-symbolic".to_string(),
-            view_id: "anytime-view".to_string(),
-            id: Uuid::new_v4().to_string(),
-            filters: HashMap::new(),
+            base: BaseObject::new(
+                "Anytime".to_string(),
+                format!("{};{};{}", "anytime", "filters", "no date"),
+                "grid-large-symbolic".to_string(),
+                "anytime-view".to_string(),
+            ),
         }
     }
 }
 
-impl BaseObject for Anytime {
-    fn filters(&self) -> HashMap<String, FilterItem> {
-        self.filters.clone()
-    }
-
+impl BaseTrait for Anytime {
     fn deleted(&self) {
         todo!()
     }
@@ -47,18 +38,6 @@ impl BaseObject for Anytime {
         todo!()
     }
 
-    fn id_string(&self) -> String {
-        todo!()
-    }
-
-    fn loading(&self, value: bool) -> bool {
-        todo!()
-    }
-
-    fn sensitive(&self, value: bool) -> bool {
-        todo!()
-    }
-
     fn loading_change(&self) {
         todo!()
     }
@@ -67,23 +46,15 @@ impl BaseObject for Anytime {
         todo!()
     }
 
-    fn view_id(&self) {
-        todo!()
-    }
-
-    fn object_type(&self) -> crate::enums::ObjectType {
-        todo!()
-    }
-
-    fn object_type_string(&self) -> String {
-        todo!()
-    }
-
-    fn column_order_name(&self) -> String {
-        todo!()
-    }
-
     fn source(&self) -> crate::objects::Source {
+        todo!()
+    }
+
+    fn loading(&self) -> bool {
+        todo!()
+    }
+
+    fn sensitive(&self) -> bool {
         todo!()
     }
 }

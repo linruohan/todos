@@ -1,4 +1,5 @@
 #![allow(unused)]
+use chrono_humanize::{Accuracy, HumanTime};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 use diesel::{SqliteConnection, r2d2};
@@ -49,6 +50,11 @@ fn main() -> Result<()> {
     println!("{}", today.weekday().num_days_from_monday());
     println!("{}", start_of_week);
     println!("{}", end_of_week);
+    let human_time = HumanTime::from(Duration::seconds(3116000));
+    println!(
+        "{}",
+        human_time.to_text_en(Accuracy::Rough, chrono_humanize::Tense::Past)
+    );
 
     Ok(())
 }

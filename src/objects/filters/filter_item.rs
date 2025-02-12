@@ -6,6 +6,13 @@ pub struct FilterItem {
     pub value: String,
 }
 impl FilterItem {
+    pub fn default() -> FilterItem {
+        Self {
+            filter_type: todo!(),
+            name: todo!(),
+            value: todo!(),
+        }
+    }
     pub fn id(&self) -> String {
         match self.filter_type {
             FilterItemType::DueDate | FilterItemType::SECTION => format!("{:?}", self.filter_type),

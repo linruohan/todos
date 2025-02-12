@@ -1,52 +1,56 @@
 use std::{any::type_name, collections::HashMap};
 
+use uuid::Uuid;
+
 use crate::enums::ObjectType;
 
 use super::{FilterItem, Source};
-pub trait BaseObject {
-    fn filters(&self) -> HashMap<String, FilterItem>;
-    fn add_filter(&mut self, filter: FilterItem) {
-        self.filters().insert(filter.id().clone(), filter);
-    }
-    fn remove_filter(&mut self, filter: FilterItem) {
-        if self.filters().contains_key(&filter.id().clone()) {
-            self.filters().remove(&filter.id().clone());
+pub struct BaseObject {
+    pub id: String,
+    pub name: String,
+    pub keywords: String,
+    pub icon_name: String,
+    pub update_timeout_id: i32,
+    pub view_id: String,
+    pub filters: HashMap<String, FilterItem>,
+}
+impl BaseObject {
+    pub fn new(name: String, keywords: String, icon_name: String, view_id: String) -> BaseObject {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            name,
+            keywords,
+            icon_name,
+            view_id,
+            filters: HashMap::new(),
+            update_timeout_id: 0,
         }
     }
-    // signal
-    fn deleted(&self);
-    fn updated(&self, update_id: String);
-    fn archived(&self);
-    fn unarchived(&self);
 
-    fn id_string(&self) -> String;
-    fn loading(&self, value: bool) -> bool;
-    fn sensitive(&self, value: bool) -> bool;
-    fn loading_change(&self);
-    fn sensitive_change(&self);
+    pub fn get_filter(&self, id: String) -> FilterItem {
+        if let Some(filter) = self.filters.get(&id) {
+            filter.clone()
+        } else {
+            FilterItem::default()
+        }
+    }
+    pub fn add_filter(&mut self, filter: FilterItem) {
+        self.filters.insert(filter.id().clone(), filter);
+    }
+    pub fn update_filter(&mut self, update_filter: FilterItem) {
+        if let Some(filter) = self.filters.get_mut(&update_filter.id().clone()) {
+            *filter = update_filter;
+        }
+    }
+    fn remove_filter(&mut self, filter: FilterItem) {
+        if self.filters.contains_key(&filter.id().clone()) {
+            self.filters.remove(&filter.id().clone());
+        }
+    }
+    fn id_string(&self) -> String {
+        self.id.clone()
+    }
 
-    fn view_id(&self);
-    fn type_name(&self) -> &str {
-        let full_name = type_name::<Self>();
-        full_name.split("::").last().unwrap()
-    }
-    fn type_delete(&self) -> String {
-        format!("{}_delete", self.type_name().to_lowercase())
-    }
-    fn type_add(&self) -> String {
-        format!("{}_add", self.type_name().to_lowercase())
-    }
-    fn type_update(&self) -> String {
-        format!("{}_update", self.type_name().to_lowercase())
-    }
-    fn object_type(&self) -> ObjectType;
-    fn object_type_string(&self) -> String;
-
-    fn table_name(&self) -> String {
-        format!("{}s", self.type_name())
-    }
-    fn column_order_name(&self) -> String;
-    fn source(&self) -> Source;
     fn get_update_json(&self, uuid: String, temp_id: String) -> &str {
         ""
     }
