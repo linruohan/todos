@@ -1,36 +1,23 @@
 #![allow(unused)]
 use chrono_humanize::{Accuracy, HumanTime};
-
+use std::error::Error;
 pub mod enums;
 pub mod objects;
 pub mod services;
 pub mod utils;
-use anyhow::{Ok, Result};
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, Utc};
-pub(crate) use objects::{Attachment, BaseObject, Item, Label, Project, Reminder, Section, Source};
-pub(crate) use services::Database;
-pub(crate) use services::models::schema;
+pub(crate) use objects::{Attachment, Item, Label, Project, Reminder, Section, Source};
+pub(crate) use objects::{Database, schema};
+pub(crate) use services::load_config;
 
-fn main() -> Result<()> {
-    let db = Database::default();
-    db.get_sources_collection();
-    // todo
-    // let _ = Todo::new("title".to_owned(), "content".to_owned());
-    // let todos = Todo::todos();
-    let today = Local::now().naive_local();
-    let start_of_week = today - Duration::days(today.weekday().num_days_from_monday() as i64);
-    let end_of_week = start_of_week + Duration::days(6);
-    println!("{}", today);
-    println!("{}", today.weekday());
-    println!("{}", today.weekday().num_days_from_monday());
-    println!("{}", start_of_week);
-    println!("{}", end_of_week);
-    let human_time = HumanTime::from(Duration::seconds(3116000));
-    println!(
-        "{}",
-        human_time.to_text_en(Accuracy::Rough, chrono_humanize::Tense::Past)
-    );
+fn main() -> Result<(), Box<dyn Error>> {
+    // let db = Database::default();
+    // db.get_sources_collection();
 
+    let config = load_config()?;
+    println!("Server: {}:{}", config.server.host, config.server.port);
+    println!("Database URL: {}", config.database.url);
+    println!("Database Pool Size: {}", config.database.pool_size);
     Ok(())
 }
 

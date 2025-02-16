@@ -1,9 +1,29 @@
-use std::{any::type_name, collections::HashMap};
-
 use crate::enums::ObjectType;
+use std::{any::type_name, collections::HashMap};
 
 use super::{FilterItem, Item, Label, Project, Reminder, Section, Source};
 pub trait BaseTrait {
+    fn id(&self) -> String;
+    fn set_id(&mut self, value: String) {
+        let mut id = self.id().clone();
+        id = value;
+    }
+    fn name(&self) -> String;
+    fn set_name(&mut self, value: String) {
+        let mut name = self.name().clone();
+        name = value;
+    }
+
+    fn keywords(&self) -> String;
+    fn set_keywords(&mut self, value: String) {
+        let mut keywords = self.keywords().clone();
+        keywords = value;
+    }
+    fn icon_name(&self) -> String;
+    fn set_icon_name(&mut self, value: String) {
+        let mut icon_name = self.icon_name().clone();
+        icon_name = value;
+    }
     // signal
     fn deleted(&self);
     fn updated(&self, update_id: String);
@@ -71,5 +91,29 @@ pub trait BaseTrait {
     }
     fn to_json(&self) -> &str {
         ""
+    }
+    fn filters(&self) -> HashMap<String, FilterItem>;
+    fn get_filter(&self, id: String) -> FilterItem {
+        if let Some(filter) = self.filters().get(&id) {
+            filter.clone()
+        } else {
+            FilterItem::default()
+        }
+    }
+    fn add_filter(&mut self, filter: FilterItem) {
+        self.filters().insert(filter.id().clone(), filter);
+    }
+    fn update_filter(&mut self, update_filter: FilterItem) {
+        if let Some(filter) = self.filters().get_mut(&update_filter.id().clone()) {
+            *filter = update_filter;
+        }
+    }
+    fn remove_filter(&mut self, filter: FilterItem) {
+        if self.filters().contains_key(&filter.id().clone()) {
+            self.filters().remove(&filter.id().clone());
+        }
+    }
+    fn id_string(&self) -> String {
+        self.id().clone()
     }
 }

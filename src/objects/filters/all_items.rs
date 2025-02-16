@@ -56,4 +56,24 @@ impl BaseTrait for AllItems {
     fn source(&self) -> crate::objects::Source {
         todo!()
     }
+
+    fn id(&self) -> String {
+        todo!()
+    }
+
+    fn name(&self) -> String {
+        todo!()
+    }
+
+    fn keywords(&self) -> String {
+        todo!()
+    }
+
+    fn icon_name(&self) -> String {
+        todo!()
+    }
+
+    fn filters(&self) -> HashMap<String, FilterItem> {
+        todo!()
+    }
 }

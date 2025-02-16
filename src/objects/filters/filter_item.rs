@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 use crate::enums::FilterItemType;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct FilterItem {
     pub filter_type: FilterItemType,
     pub name: String,

@@ -16,7 +16,7 @@ impl ObjectEventKeyType {
             Some("description") => ObjectEventKeyType::DESCRIPTION,
             Some("due") => ObjectEventKeyType::DUE,
             Some("priority") => ObjectEventKeyType::PRIORITY,
-            Some("labels") => ObjectEventKeyType::LABELS,
+            Some("label") => ObjectEventKeyType::LABELS,
             Some("pinned") => ObjectEventKeyType::PINNED,
             Some("checked") => ObjectEventKeyType::CHECKED,
             Some("project") => ObjectEventKeyType::PROJECT,

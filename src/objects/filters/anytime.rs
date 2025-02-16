@@ -3,7 +3,7 @@ use std::{any::Any, collections::HashMap};
 use uuid::Uuid;
 
 use super::FilterItem;
-use crate::{BaseObject, objects::BaseTrait};
+use crate::objects::BaseTrait;
 pub struct Anytime {
     pub base: BaseObject,
 }
@@ -55,6 +55,26 @@ impl BaseTrait for Anytime {
     }
 
     fn sensitive(&self) -> bool {
+        todo!()
+    }
+
+    fn id(&self) -> String {
+        todo!()
+    }
+
+    fn name(&self) -> String {
+        todo!()
+    }
+
+    fn keywords(&self) -> String {
+        todo!()
+    }
+
+    fn icon_name(&self) -> String {
+        todo!()
+    }
+
+    fn filters(&self) -> HashMap<String, FilterItem> {
         todo!()
     }
 }

@@ -91,17 +91,15 @@ impl Database {
         Ok(())
     }
 
-    pub fn get_sources_collection(&self) {
+    pub fn get_sources_collection(&self) -> Vec<Source> {
         let mut conn = self.get_conn();
-        let s = diesel::sql_query(
+        diesel::sql_query(
             r#"
        SELECT * FROM Sources ORDER BY child_order;
         "#,
         )
-        .execute(&mut conn)
-        // .load::<Source>(&mut self.conn)
-        .expect("Failed to get Sources");
-        println!("s:{:?}", s);
-        println!("Database initialized successfully!");
+        // .execute(&mut conn)
+        .load::<Source>(&mut conn)
+        .expect("Failed to get Sources")
     }
 }

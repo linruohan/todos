@@ -1,6 +1,5 @@
-use crate::{Attachment, Item, Label, Project, Reminder, Section, Source};
+use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
 
-use super::Database;
 pub struct Store {}
 
 impl Store {
@@ -42,7 +41,7 @@ impl Store {
 
     pub fn attachment_deleted(attachment: Attachment) {}
 
-    // pub fn sources() -> Vec<Source> {
-    //     let sources = Database::default();
-    // }
+    pub fn sources() -> Vec<Source> {
+        Database::default().get_sources_collection()
+    }
 }

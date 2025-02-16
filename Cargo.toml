@@ -26,6 +26,7 @@ uuid = { version = "1.11.0", features = [
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ] }
+config = "0.13" # 用于读取配置文件
 # gimli={version="0.31.1"}
 # serde-wasm-bindgen = "0.6.5"
 # wasm-bindgen = "0.2.99"
