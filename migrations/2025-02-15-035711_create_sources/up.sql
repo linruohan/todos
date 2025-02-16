@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS sources (
-    id TEXT NOT NULL PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     source_type TEXT NOT NULL,
     display_name TEXT NOT NULL,
     added_at TEXT NOT NULL,

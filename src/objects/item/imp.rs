@@ -9,7 +9,7 @@ use std::ops::Deref;
 #[diesel(table_name = items)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Item {
-    pub id: String,
+    pub id: i32,
     pub content: String,
     pub description: String,
     pub due: String,

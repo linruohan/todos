@@ -2,7 +2,7 @@
 
 diesel::table! {
     attachments (id) {
-        id -> Text,
+        id -> Integer,
         item_id -> Text,
         file_type -> Text,
         file_name -> Text,
@@ -13,7 +13,7 @@ diesel::table! {
 
 diesel::table! {
     cur_temp_ids (id) {
-        id -> Text,
+        id -> Integer,
         temp_id -> Text,
         object -> Text,
     }
@@ -21,7 +21,7 @@ diesel::table! {
 
 diesel::table! {
     items (id) {
-        id -> Text,
+        id -> Integer,
         content -> Text,
         description -> Text,
         due -> Text,
@@ -46,7 +46,7 @@ diesel::table! {
 
 diesel::table! {
     labels (id) {
-        id -> Text,
+        id -> Integer,
         name -> Text,
         color -> Text,
         item_order -> Nullable<Integer>,
@@ -74,7 +74,7 @@ diesel::table! {
 
 diesel::table! {
     projects (id) {
-        id -> Text,
+        id -> Integer,
         name -> Text,
         color -> Text,
         backend_type -> Text,
@@ -113,7 +113,7 @@ diesel::table! {
 
 diesel::table! {
     reminders (id) {
-        id -> Text,
+        id -> Integer,
         notify_uid -> Nullable<Integer>,
         item_id -> Text,
         service -> Text,
@@ -127,7 +127,7 @@ diesel::table! {
 
 diesel::table! {
     sections (id) {
-        id -> Text,
+        id -> Integer,
         name -> Text,
         archived_at -> Text,
         added_at -> Text,
@@ -144,7 +144,7 @@ diesel::table! {
 
 diesel::table! {
     sources (id) {
-        id -> Text,
+        id -> Integer,
         source_type -> Text,
         display_name -> Text,
         added_at -> Text,

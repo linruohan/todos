@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS attachments (
-    id TEXT NOT NULL PRIMARY KEY,
+    id INTEGER NOT NULL PRIMARY KEY,
     item_id TEXT NOT NULL,
     file_type TEXT NOT NULL,
     file_name TEXT NOT NULL,
