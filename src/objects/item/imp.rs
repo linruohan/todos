@@ -37,7 +37,7 @@ impl Item {
 }
 
 impl BaseTrait for Item {
-    fn id(&self) -> String {
+    fn id(&self) -> i32 {
         todo!()
     }
 

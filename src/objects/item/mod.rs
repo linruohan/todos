@@ -10,7 +10,7 @@ use diesel::QueryDsl;
 use items::table;
 use std::ops::Deref;
 
-pub fn get_item(db: Database, item_id: String) -> Item {
+pub fn get_item(db: Database, item_id: i32) -> Item {
     let mut conn = db.get_conn();
     items::table
         .filter(id.eq(item_id))

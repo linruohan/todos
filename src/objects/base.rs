@@ -3,9 +3,9 @@ use std::{any::type_name, collections::HashMap};
 
 use super::{FilterItem, Item, Label, Project, Reminder, Section, Source};
 pub trait BaseTrait {
-    fn id(&self) -> String;
-    fn set_id(&mut self, value: String) {
-        let mut id = self.id().clone();
+    fn id(&self) -> i32;
+    fn set_id(&mut self, value: i32) {
+        let mut id = self.id();
         id = value;
     }
     fn name(&self) -> String;
