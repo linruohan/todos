@@ -29,7 +29,7 @@ impl Attachment {
         // store.delete_attachment(self)
     }
     pub fn item(&self) -> Item {
-        get_item(self.item_id.clone())
+        todo!()
     }
     pub fn set_item(&mut self, new_item_id: String) {
         self.item_id = new_item_id
@@ -49,8 +49,4 @@ impl Attachment {
         );
         new
     }
-}
-
-fn get_item(item_id: String) -> Item {
-    Item {}
 }

@@ -1,44 +1,19 @@
 #![allow(unused)]
 use chrono_humanize::{Accuracy, HumanTime};
-use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, PooledConnection};
-use diesel::{SqliteConnection, r2d2};
-use dotenvy::dotenv;
-use models::todo::imp::Todo;
-use std::env;
-use std::sync::Arc;
+
 pub mod enums;
-pub mod models;
 pub mod objects;
+pub mod services;
 pub mod utils;
 use anyhow::{Ok, Result};
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, Utc};
-pub(crate) use objects::BaseObject;
-
-pub fn establish_connection() -> SqliteConnection {
-    dotenv().ok();
-
-    let database_url = env::var("SQLITE_DATABASE_URL")
-        .or_else(|_| env::var("DATABASE_URL"))
-        .expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-}
-
-pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
-pub fn get_db() -> Result<PooledConnection<ConnectionManager<SqliteConnection>>> {
-    dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let manager = ConnectionManager::<SqliteConnection>::new(database_url);
-    let pool = r2d2::Pool::builder()
-        .max_size(5)
-        .build(manager)
-        .expect("Failed to create pool.");
-    let db = Arc::new(pool).get().map_err(|e| anyhow::anyhow!(e))?;
-    Ok(db)
-}
+pub(crate) use objects::{Attachment, BaseObject, Item, Label, Project, Reminder, Section, Source};
+pub(crate) use services::Database;
+pub(crate) use services::models::schema;
 
 fn main() -> Result<()> {
+    let db = Database::default();
+    db.get_sources_collection();
     // todo
     // let _ = Todo::new("title".to_owned(), "content".to_owned());
     // let todos = Todo::todos();
@@ -58,3 +33,31 @@ fn main() -> Result<()> {
 
     Ok(())
 }
+
+// use std::thread;
+
+// fn main() {
+//     // 初始化连接池并用 Arc 包装
+//     let pool: DbPool = init_pool();
+
+//     // 克隆 Arc 以共享连接池
+//     let pool_clone = Arc::clone(&pool);
+
+//     // 在另一个线程中插入用户
+//     let handle = thread::spawn(move || {
+//         let new_user = NewUser {
+//             name: "Bob".to_string(),
+//             email: "bob@example.com".to_string(),
+//         };
+//         insert_user(&pool_clone, new_user).expect("Failed to insert user");
+//     });
+
+//     // 在主线程中查询用户
+//     let users = get_all_users(&pool).expect("Failed to load users");
+//     for user in users {
+//         println!("User: {} ({})", user.name, user.email);
+//     }
+
+//     // 等待子线程完成
+//     handle.join().unwrap();
+// }

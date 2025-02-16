@@ -1,7 +1,7 @@
 pub mod imp;
 pub mod schema;
 
-use crate::get_db;
+use crate::services::database::Database;
 use anyhow::{Ok, Result};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
@@ -14,7 +14,7 @@ impl Todo {
     }
 
     pub async fn create_todo(&self, new_todo: NewTodo) -> Result<()> {
-        let mut conn = get_db()?;
+        let mut conn = Database::get_conn();
         diesel::insert_into(todos::table)
             .values(&new_todo)
             .returning(Todo::as_returning())
