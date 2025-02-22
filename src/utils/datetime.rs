@@ -11,6 +11,9 @@ pub const EMPTY_DATETIME: NaiveDateTime =
     chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc();
 pub struct DateTime {}
 impl DateTime {
+    pub fn default() -> DateTime {
+        Self {}
+    }
     pub fn get_todoist_datetime(&self, date: String) -> Result<NaiveDateTime, ParseError> {
         // YYYY-MM-DD
         if date.len() == 10 {

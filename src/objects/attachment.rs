@@ -40,7 +40,6 @@ impl Attachment {
             file_path,
         }
     }
-    pub fn deleted(&self) {}
     pub fn delete(&self) {
         Store::instance().delete_attachment(self.clone());
     }
