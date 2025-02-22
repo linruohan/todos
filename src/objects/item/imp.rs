@@ -1,4 +1,4 @@
-use crate::objects::BaseTrait;
+use crate::objects::{BaseTrait, DueDate};
 use crate::schema::items;
 use crate::{Database, Project};
 use diesel::QueryDsl;
@@ -9,10 +9,10 @@ use std::ops::Deref;
 #[diesel(table_name = items)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Item {
-    pub id: i32,
+    pub id: String,
     pub content: String,
     pub description: String,
-    pub due: String,
+    pub due: DueDate,
     pub added_at: String,
     pub completed_at: String,
     pub updated_at: String,
@@ -33,6 +33,11 @@ pub struct Item {
 impl Item {
     pub(crate) fn project(&self) -> Project {
         todo!()
+    }
+
+    }
+    pub fn has_due(&self) -> bool {
+        self.due.datetime().is_empty()
     }
 }
 

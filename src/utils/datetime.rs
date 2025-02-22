@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{enums::RecurrencyType, objects::DueDate};
+use crate::{Item, enums::RecurrencyType, objects::DueDate};
 use anyhow::Result;
 use chrono::{
     Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, ParseError, Timelike,
@@ -153,78 +153,59 @@ impl DateTime {
         NaiveDateTime::from_str(&date).unwrap()
     }
 
-    // pub static void recurrence_to_due (ICal.Recurrence recurrence, Objects.DueDate due) {
-    //     due.is_recurring = true;
+    pub fn recurrence_to_due(&self, recurrence: RecurrencyType, due: &mut DueDate) {
+        due.is_recurring = true;
+        // due.recurrency_interval = recurrence.interval;
+        // due.recurrency_count = recurrence.get_count ();
+        // ICal.Time until = recurrence.get_until ();
+        // if (!until.is_null_time ()) {
+        //     due.recurrency_end = ical_to_date_time_local (until).to_string ();
+        // }
 
-    //     ICal.RecurrenceFrequency freq = recurrence.get_freq ();
-    //     if (freq == ICal.RecurrenceFrequency.MINUTELY_RECURRENCE) {
-    //         due.recurrency_type = RecurrencyType.MINUTELY;
-    //     } else if (freq == ICal.RecurrenceFrequency.HOURLY_RECURRENCE) {
-    //         due.recurrency_type = RecurrencyType.HOURLY;
-    //     } else if (freq == ICal.RecurrenceFrequency.DAILY_RECURRENCE) {
-    //         due.recurrency_type = RecurrencyType.EVERY_DAY;
-    //     } else if (freq == ICal.RecurrenceFrequency.WEEKLY_RECURRENCE) {
-    //         due.recurrency_type = RecurrencyType.EVERY_WEEK;
-    //     } else if (freq == ICal.RecurrenceFrequency.MONTHLY_RECURRENCE) {
-    //         due.recurrency_type = RecurrencyType.EVERY_MONTH;
-    //     } else if (freq == ICal.RecurrenceFrequency.YEARLY_RECURRENCE) {
-    //         due.recurrency_type = RecurrencyType.EVERY_YEAR;
-    //     }
+        if (due.recurrency_type == RecurrencyType::EveryWeek) {
+            let mut recurrency_weeks = String::new();
+            // let day_array = recurrence.get_by_day_array ();
+            let mut day_array: Vec<NaiveDateTime> = Vec::new();
 
-    //     short interval = recurrence.get_interval ();
-    //     due.recurrency_interval = (int) interval;
+            if self.check_by_day("1", &day_array) {
+                recurrency_weeks.push_str("7,");
+            }
 
-    //     int count = recurrence.get_count ();
-    //     due.recurrency_count = count;
+            if self.check_by_day("2", &day_array) {
+                recurrency_weeks.push_str("1,");
+            }
 
-    //     ICal.Time until = recurrence.get_until ();
-    //     if (!until.is_null_time ()) {
-    //         due.recurrency_end = ical_to_date_time_local (until).to_string ();
-    //     }
+            if self.check_by_day("3", &day_array) {
+                recurrency_weeks.push_str("2,");
+            }
 
-    //     if (due.recurrency_type == RecurrencyType.EVERY_WEEK) {
-    //         string recurrency_weeks = "";
-    //         GLib.Array<short> day_array = recurrence.get_by_day_array ();
+            if (self.check_by_day("4", &day_array)) {
+                recurrency_weeks.push_str("3,");
+            }
 
-    //         if (check_by_day ("1", day_array)) {
-    //             recurrency_weeks += "7,";
-    //         }
+            if (self.check_by_day("5", &day_array)) {
+                recurrency_weeks.push_str("4,");
+            }
 
-    //         if (check_by_day ("2", day_array)) {
-    //             recurrency_weeks += "1,";
-    //         }
+            if (self.check_by_day("6", &day_array)) {
+                recurrency_weeks.push_str("5,");
+            }
 
-    //         if (check_by_day ("3", day_array)) {
-    //             recurrency_weeks += "2,";
-    //         }
+            if (self.check_by_day("7", &day_array)) {
+                recurrency_weeks.push_str("6,");
+            }
+            let week_array: Vec<&str> = recurrency_weeks.split(",").collect();
+            if (week_array.len() > 0) {
+                let new_idx = recurrency_weeks.len().saturating_sub(1);
+                recurrency_weeks = recurrency_weeks[0..new_idx].to_string();
+            }
+            due.recurrency_weeks = recurrency_weeks;
+        }
+    }
 
-    //         if (check_by_day ("4", day_array)) {
-    //             recurrency_weeks += "3,";
-    //         }
-
-    //         if (check_by_day ("5", day_array)) {
-    //             recurrency_weeks += "4,";
-    //         }
-
-    //         if (check_by_day ("6", day_array)) {
-    //             recurrency_weeks += "5,";
-    //         }
-
-    //         if (check_by_day ("7", day_array)) {
-    //             recurrency_weeks += "6,";
-    //         }
-
-    //         if (recurrency_weeks.split (",").length > 0) {
-    //             recurrency_weeks.slice (0, -1);
-    //         }
-
-    //         due.recurrency_weeks = recurrency_weeks;
-    //     }
-    // }
-
-    fn check_by_day(&self, day: String, day_array: Vec<NaiveDateTime>) -> bool {
+    fn check_by_day(&self, day: &str, day_array: &Vec<NaiveDateTime>) -> bool {
         for day1 in day_array.iter() {
-            if day1.to_string() == day {
+            if day1.to_string() == day.to_string() {
                 return true;
             }
         }
@@ -262,29 +243,54 @@ impl DateTime {
         return current_date.month() == date.month() && current_date.year() == date.year();
     }
 
-    // pub static GLib.DateTime next_recurrency (GLib.DateTime datetime, Objects.DueDate duedate) {
-    //     GLib.DateTime returned = datetime;
+    pub fn add_years(&self, datetime: NaiveDateTime, years: i32) -> NaiveDateTime {
+        let date = datetime.date();
+        let time = datetime.time();
+        date.with_year(date.year() + years).unwrap().and_time(time)
+    }
+    pub fn add_months(&self, datetime: NaiveDateTime, months: u32) -> NaiveDateTime {
+        let mut year = datetime.year();
+        let mut month = datetime.month();
+        let mut day = datetime.day();
+        month += months;
+        // 计算新的年和月
+        while month > 12 {
+            month -= 12;
+            year += 1;
+        }
+        // 处理月份溢出问题
+        let new_date = NaiveDate::from_ymd_opt(year, month, day).unwrap_or_else(|| {
+            // 如果日期无效，比如2.30,则回退到月的第一天
+            NaiveDate::from_ymd_opt(year, month + 1, 1)
+                .unwrap()
+                .pred_opt()
+                .expect("add nativedatetime failed")
+        });
+        new_date.and_time(datetime.time())
+    }
 
-    //     if (duedate.recurrency_type == RecurrencyType.MINUTELY) {
-    //         returned = returned.add_minutes (duedate.recurrency_interval);
-    //     } else if (duedate.recurrency_type == RecurrencyType.HOURLY) {
-    //         returned = returned.add_hours (duedate.recurrency_interval);
-    //     } else if (duedate.recurrency_type == RecurrencyType.EVERY_DAY) {
-    //         returned = returned.add_days (duedate.recurrency_interval);
-    //     } else if (duedate.recurrency_type == RecurrencyType.EVERY_WEEK) {
-    //         if (duedate.recurrency_weeks == "") {
-    //             returned = returned.add_days (duedate.recurrency_interval * 7);
-    //         } else {
-    //             returned = next_recurrency_week (datetime, duedate, true);
-    //         }
-    //     } else if (duedate.recurrency_type == RecurrencyType.EVERY_MONTH) {
-    //         returned = returned.add_months (duedate.recurrency_interval);
-    //     } else if (duedate.recurrency_type == RecurrencyType.EVERY_YEAR) {
-    //         returned = returned.add_years (duedate.recurrency_interval);
-    //     }
-
-    //     return returned;
-    // }
+    pub fn next_recurrency(&self, datetime: NaiveDateTime, duedate: DueDate) -> NaiveDateTime {
+        let returned = datetime;
+        match duedate.recurrency_type {
+            RecurrencyType::MINUTELY => returned + Duration::minutes(duedate.recurrency_interval),
+            RecurrencyType::HOURLY => returned + Duration::hours(duedate.recurrency_interval),
+            RecurrencyType::EveryDay => returned + Duration::days(duedate.recurrency_interval),
+            RecurrencyType::EveryWeek => {
+                if duedate.recurrency_weeks == "" {
+                    return returned + Duration::days(duedate.recurrency_interval * 7);
+                } else {
+                    return self.next_recurrency_week(datetime, duedate, false);
+                }
+            }
+            RecurrencyType::EveryMonth => {
+                self.add_months(datetime, duedate.recurrency_interval as u32)
+            }
+            RecurrencyType::EveryYear => {
+                self.add_years(datetime, duedate.recurrency_interval as i32)
+            }
+            _ => returned,
+        }
+    }
 
     pub fn get_next_day_of_week_from_recurrency_week(
         datetime: NaiveDateTime,
@@ -310,35 +316,39 @@ impl DateTime {
         None
     }
 
-    // pub static GLib.DateTime next_recurrency_week (GLib.DateTime datetime, Objects.DueDate duedate, bool user = false) {
-    //     string[] weeks = duedate.recurrency_weeks.split (","); // [1, 2, 3]
-    //     int day_of_week = datetime.get_day_of_week (); // 2
-    //     int days = 0;
-    //     int next_day = 0;
-    //     int index = 0;
-    //     int recurrency_interval = 0;
+    pub fn next_recurrency_week(
+        &self,
+        datetime: NaiveDateTime,
+        duedate: DueDate,
+        user: bool,
+    ) -> NaiveDateTime {
+        let weeks: Vec<&str> = duedate.recurrency_weeks.split(",").collect(); // [1, 2, 3]
+        let day_of_week: i64 = datetime.weekday().num_days_from_monday() as i64; // 2
+        let mut days: i64 = 0;
+        let mut next_day: i64 = 0;
+        let mut index = 0;
+        let mut recurrency_interval = 0;
 
-    //     for (int i = 0; i < weeks.length ; i++) {
-    //         if (day_of_week < int.parse (weeks[i])) {
-    //             index = i;
-    //             break;
-    //         }
-    //     }
+        for i in 0..weeks.len() {
+            if day_of_week < weeks[i].parse::<i64>().unwrap() {
+                index = i;
+                break;
+            }
+        }
+        next_day = weeks[index].parse::<i64>().unwrap();
 
-    //     next_day = int.parse (weeks[index]);
+        if (day_of_week < next_day) {
+            days = next_day - day_of_week;
+        } else {
+            days = 7 - (day_of_week - next_day);
+        }
 
-    //     if (day_of_week < next_day) {
-    //         days = next_day - day_of_week;
-    //     } else {
-    //         days = 7 - (day_of_week - next_day);
-    //     }
+        if (user && index == 0) {
+            recurrency_interval = (duedate.recurrency_interval - 1) * 7;
+        }
 
-    //     if (user && index == 0) {
-    //         recurrency_interval = (duedate.recurrency_interval - 1) * 7;
-    //     }
-
-    //     return datetime.add_days (days).add_days (recurrency_interval);
-    // }
+        return datetime + Duration::days(days) + Duration::days(recurrency_interval);
+    }
 
     pub fn get_recurrency_weeks(
         recurrency_type: RecurrencyType,
@@ -535,22 +545,22 @@ impl DateTime {
     //     return result;
     // }
 
-    // pub static string get_markdown_format_date (Objects.Item item) {
-    //     if (!item.has_due) {
-    //         return " ";
-    //     }
+    pub fn get_markdown_format_date(&self, item: Item) -> String {
+        if (!item::has_due()) {
+            return " ".to_string();
+        }
 
-    //     return " (" + get_relative_date_from_date (item.due.datetime) + ") ";
-    // }
+        return format!(
+            " ({}) ",
+            self.get_relative_date_from_date(item.due.datetime)
+        );
+    }
 
-    // pub static GLib.DateTime get_datetime_no_seconds (GLib.DateTime date, GLib.DateTime? time = null) {
-    //     return new DateTime.local (
-    //         date.get_year (),
-    //         date.get_month (),
-    //         date.get_day_of_month (),
-    //         time == null ? date.get_hour () : time.get_hour (),
-    //         time == null ? date.get_minute () : time.get_minute (),
-    //         0
-    //     );
-    // }
+    pub fn get_datetime_no_seconds(&self, datetime: NaiveDateTime) -> NaiveDateTime {
+        let time = datetime.time();
+        NaiveDateTime::new(
+            datetime.date(),
+            NaiveTime::from_hms_opt(time.hour(), time.minute(), 0).unwrap(),
+        )
+    }
 }

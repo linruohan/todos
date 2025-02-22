@@ -1,10 +1,10 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS attachments (
-    id INTEGER NOT NULL PRIMARY KEY,
-    item_id TEXT NOT NULL,
-    file_type TEXT NOT NULL,
-    file_name TEXT NOT NULL,
-    file_size TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    FOREIGN KEY (item_id) REFERENCES items (id) ON DELETE CASCADE
+    id TEXT PRIMARY KEY,
+    item_id TEXT,
+    file_type TEXT,
+    file_name TEXT,
+    file_size TEXT,
+    file_path TEXT,
+    FOREIGN KEY (item_id) REFERENCES Items (id) ON DELETE CASCADE
 );

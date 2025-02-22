@@ -1,9 +1,9 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS projects (
-    id INTEGER NOT NULL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    color TEXT NOT NULL,
-    backend_type TEXT NOT NULL,
+    color TEXT,
+    backend_type TEXT,
     inbox_project INTEGER,
     team_inbox INTEGER,
     child_order INTEGER,
@@ -11,16 +11,16 @@ CREATE TABLE IF NOT EXISTS projects (
     is_archived INTEGER,
     is_favorite INTEGER,
     shared INTEGER,
-    view_style TEXT NOT NULL,
+    view_style TEXT,
     sort_order INTEGER,
-    parent_id TEXT NOT NULL,
+    parent_id TEXT,
     collapsed INTEGER,
-    icon_style TEXT NOT NULL,
-    emoji TEXT NOT NULL,
+    icon_style TEXT,
+    emoji TEXT,
     show_completed INTEGER,
-    description TEXT NOT NULL,
-    due_date TEXT NOT NULL,
+    description TEXT,
+    due_date TEXT,
     inbox_section_hidded INTEGER,
-    sync_id TEXT NOT NULL,
-    source_id TEXT NOT NULL
+    sync_id TEXT,
+    source_id TEXT
 );

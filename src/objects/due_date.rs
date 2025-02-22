@@ -8,8 +8,8 @@ pub struct DueDate {
     pub recurrency_weeks: String,
     pub is_recurring: bool,
     pub recurrency_type: RecurrencyType,
-    pub recurrency_interval: i32,
-    pub recurrency_count: i32,
+    pub recurrency_interval: i64,
+    pub recurrency_count: i64,
     pub recurrency_end: String,
     pub recurrency_supported: bool,
 }

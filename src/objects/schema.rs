@@ -2,82 +2,82 @@
 
 diesel::table! {
     attachments (id) {
-        id -> Integer,
-        item_id -> Text,
-        file_type -> Text,
-        file_name -> Text,
-        file_size -> Text,
-        file_path -> Text,
+        id -> Nullable<Text>,
+        item_id -> Nullable<Text>,
+        file_type -> Nullable<Text>,
+        file_name -> Nullable<Text>,
+        file_size -> Nullable<Text>,
+        file_path -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     cur_temp_ids (id) {
-        id -> Integer,
-        temp_id -> Text,
-        object -> Text,
+        id -> Nullable<Text>,
+        temp_id -> Nullable<Text>,
+        object -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     items (id) {
-        id -> Integer,
+        id -> Nullable<Text>,
         content -> Text,
-        description -> Text,
-        due -> Text,
-        added_at -> Text,
-        completed_at -> Text,
-        updated_at -> Text,
-        section_id -> Text,
-        project_id -> Text,
-        parent_id -> Text,
-        priority -> Integer,
-        child_order -> Integer,
-        checked -> Integer,
-        is_deleted -> Integer,
-        day_order -> Integer,
-        collapsed -> Integer,
-        pinned -> Integer,
-        labels -> Text,
-        extra_data -> Text,
-        item_type -> Text,
+        description -> Nullable<Text>,
+        due -> Nullable<Text>,
+        added_at -> Nullable<Text>,
+        completed_at -> Nullable<Text>,
+        updated_at -> Nullable<Text>,
+        section_id -> Nullable<Text>,
+        project_id -> Nullable<Text>,
+        parent_id -> Nullable<Text>,
+        priority -> Nullable<Integer>,
+        child_order -> Nullable<Integer>,
+        checked -> Nullable<Integer>,
+        is_deleted -> Nullable<Integer>,
+        day_order -> Nullable<Integer>,
+        collapsed -> Nullable<Integer>,
+        pinned -> Nullable<Integer>,
+        labels -> Nullable<Text>,
+        extra_data -> Nullable<Text>,
+        item_type -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     labels (id) {
-        id -> Integer,
-        name -> Text,
-        color -> Text,
+        id -> Nullable<Text>,
+        name -> Nullable<Text>,
+        color -> Nullable<Text>,
         item_order -> Nullable<Integer>,
         is_deleted -> Nullable<Integer>,
         is_favorite -> Nullable<Integer>,
-        backend_type -> Text,
-        source_id -> Text,
+        backend_type -> Nullable<Text>,
+        source_id -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     o_events (id) {
         id -> Nullable<Integer>,
-        event_type -> Text,
+        event_type -> Nullable<Text>,
         event_date -> Nullable<Timestamp>,
-        object_id -> Text,
-        object_type -> Text,
-        object_key -> Text,
-        object_old_value -> Text,
-        object_new_value -> Text,
-        parent_item_id -> Text,
-        parent_project_id -> Text,
+        object_id -> Nullable<Text>,
+        object_type -> Nullable<Text>,
+        object_key -> Nullable<Text>,
+        object_old_value -> Nullable<Text>,
+        object_new_value -> Nullable<Text>,
+        parent_item_id -> Nullable<Text>,
+        parent_project_id -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     projects (id) {
-        id -> Integer,
+        id -> Nullable<Text>,
         name -> Text,
-        color -> Text,
-        backend_type -> Text,
+        color -> Nullable<Text>,
+        backend_type -> Nullable<Text>,
         inbox_project -> Nullable<Integer>,
         team_inbox -> Nullable<Integer>,
         child_order -> Nullable<Integer>,
@@ -85,41 +85,41 @@ diesel::table! {
         is_archived -> Nullable<Integer>,
         is_favorite -> Nullable<Integer>,
         shared -> Nullable<Integer>,
-        view_style -> Text,
+        view_style -> Nullable<Text>,
         sort_order -> Nullable<Integer>,
-        parent_id -> Text,
+        parent_id -> Nullable<Text>,
         collapsed -> Nullable<Integer>,
-        icon_style -> Text,
-        emoji -> Text,
+        icon_style -> Nullable<Text>,
+        emoji -> Nullable<Text>,
         show_completed -> Nullable<Integer>,
-        description -> Text,
-        due_date -> Text,
+        description -> Nullable<Text>,
+        due_date -> Nullable<Text>,
         inbox_section_hidded -> Nullable<Integer>,
-        sync_id -> Text,
-        source_id -> Text,
+        sync_id -> Nullable<Text>,
+        source_id -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     queue (uuid) {
-        uuid -> Text,
-        object_id -> Text,
-        query -> Text,
-        temp_id -> Text,
-        args -> Text,
-        date_added -> Text,
+        uuid -> Nullable<Text>,
+        object_id -> Nullable<Text>,
+        query -> Nullable<Text>,
+        temp_id -> Nullable<Text>,
+        args -> Nullable<Text>,
+        date_added -> Nullable<Text>,
     }
 }
 
 diesel::table! {
     reminders (id) {
-        id -> Integer,
+        id -> Nullable<Text>,
         notify_uid -> Nullable<Integer>,
-        item_id -> Text,
-        service -> Text,
+        item_id -> Nullable<Text>,
+        service -> Nullable<Text>,
         #[sql_name = "type"]
-        type_ -> Text,
-        due -> Text,
+        type_ -> Nullable<Text>,
+        due -> Nullable<Text>,
         mm_offset -> Nullable<Integer>,
         is_deleted -> Nullable<Integer>,
     }
@@ -127,39 +127,35 @@ diesel::table! {
 
 diesel::table! {
     sections (id) {
-        id -> Integer,
-        name -> Text,
-        archived_at -> Text,
-        added_at -> Text,
-        project_id -> Text,
+        id -> Nullable<Text>,
+        name -> Nullable<Text>,
+        archived_at -> Nullable<Text>,
+        added_at -> Nullable<Text>,
+        project_id -> Nullable<Text>,
         section_order -> Nullable<Integer>,
         collapsed -> Nullable<Integer>,
         is_deleted -> Nullable<Integer>,
         is_archived -> Nullable<Integer>,
-        color -> Text,
-        description -> Text,
+        color -> Nullable<Text>,
+        description -> Nullable<Text>,
         hidded -> Nullable<Integer>,
     }
 }
 
 diesel::table! {
     sources (id) {
-        id -> Integer,
+        id -> Nullable<Text>,
         source_type -> Text,
-        display_name -> Text,
-        added_at -> Text,
-        updated_at -> Text,
+        display_name -> Nullable<Text>,
+        added_at -> Nullable<Text>,
+        updated_at -> Nullable<Text>,
         is_visible -> Nullable<Integer>,
         child_order -> Nullable<Integer>,
         sync_server -> Nullable<Integer>,
-        last_sync -> Text,
-        data -> Text,
+        last_sync -> Nullable<Text>,
+        data -> Nullable<Text>,
     }
 }
-
-diesel::joinable!(attachments -> items (item_id));
-diesel::joinable!(reminders -> items (item_id));
-diesel::joinable!(sections -> projects (project_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     attachments,

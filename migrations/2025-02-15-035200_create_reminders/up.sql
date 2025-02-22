@@ -1,12 +1,12 @@
 -- Your SQL goes here
 CREATE TABLE IF NOT EXISTS reminders (
-    id INTEGER NOT NULL PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     notify_uid INTEGER,
-    item_id TEXT NOT NULL,
-    service TEXT NOT NULL,
-    type TEXT NOT NULL,
-    due TEXT NOT NULL,
+    item_id TEXT,
+    service TEXT,
+    type TEXT,
+    due TEXT,
     mm_offset INTEGER,
     is_deleted INTEGER,
-    FOREIGN KEY (item_id) REFERENCES items (id) ON DELETE CASCADE
+    FOREIGN KEY (item_id) REFERENCES Items (id) ON DELETE CASCADE
 );
