@@ -7,7 +7,8 @@ use chrono::{
 };
 use chrono_humanize::{Accuracy, HumanTime};
 use diesel::{dsl::date, sql_types::Json};
-const EMPTY_DATETIME: NaiveDateTime = chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc();
+pub const EMPTY_DATETIME: NaiveDateTime =
+    chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc();
 pub struct DateTime {}
 impl DateTime {
     pub fn get_todoist_datetime(&self, date: String) -> Result<NaiveDateTime, ParseError> {
@@ -546,13 +547,13 @@ impl DateTime {
     // }
 
     pub fn get_markdown_format_date(&self, item: Item) -> String {
-        if (!item::has_due()) {
+        if (!item.has_due()) {
             return " ".to_string();
         }
 
         return format!(
             " ({}) ",
-            self.get_relative_date_from_date(item.due.datetime)
+            self.get_relative_date_from_date(item.due().datetime())
         );
     }
 

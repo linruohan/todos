@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, PartialEq, Eq)]
+#[derive(Serialize, Debug, PartialEq, Eq, Clone, Deserialize)]
 pub enum RecurrencyType {
     MINUTELY,
     HOURLY,

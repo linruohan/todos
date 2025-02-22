@@ -2,6 +2,8 @@ use std::str::FromStr;
 
 use crate::enums::{RecurrencyEndType, RecurrencyType};
 use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
+#[derive(Debug, PartialEq, Eq, Serialize, Clone, Deserialize)]
 pub struct DueDate {
     pub date: String,
     pub timezone: String,
@@ -14,6 +16,19 @@ pub struct DueDate {
     pub recurrency_supported: bool,
 }
 impl DueDate {
+    pub fn default() -> DueDate {
+        Self {
+            date: "".to_string(),
+            timezone: "".to_string(),
+            recurrency_weeks: "".to_string(),
+            is_recurring: false,
+            recurrency_type: RecurrencyType::NONE,
+            recurrency_interval: 0,
+            recurrency_count: 0,
+            recurrency_end: "".to_string(),
+            recurrency_supported: false,
+        }
+    }
     pub fn datetime(&self) -> NaiveDateTime {
         NaiveDateTime::from_str(&self.date).unwrap()
     }

@@ -5,68 +5,45 @@ use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::sql_query;
 use dotenvy::dotenv;
+use once_cell::sync::OnceCell;
 use std::env;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Once;
 use std::vec;
+
+use super::Attachment;
+use super::Item;
 pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
+// 定义全局的数据库连接池
+pub static DB_POOL: OnceCell<DbPool> = OnceCell::new();
 pub type PooledConnection = r2d2::PooledConnection<ConnectionManager<SqliteConnection>>;
-pub struct Database {
-    pub pool: DbPool,
-}
-// 初始化数据库连接池
-pub fn init_pool() -> DbPool {
-    // 从 .env 文件加载环境变量
-    dotenv().ok();
-
-    // 获取数据库 URL
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
-    // 创建连接管理器
-    let manager = ConnectionManager::<SqliteConnection>::new(database_url);
-
-    // 创建连接池并用 Arc 包装
-    Arc::new(
-        r2d2::Pool::builder()
+pub struct Database {}
+fn get_db_pool() -> &'static DbPool {
+    DB_POOL.get_or_init(|| {
+        dotenv().ok(); // 加载 .env 文件
+        let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+        let manager = ConnectionManager::<SqliteConnection>::new(database_url);
+        let pool = r2d2::Pool::builder()
             .build(manager)
-            .expect("Failed to create pool"),
-    )
+            .expect("Failed to create database pool");
+        Arc::new(pool)
+    })
 }
+
 /// 从连接池中获取一个连接
 // pub fn get_conn(pool: &DbPool) -> PooledConnection {
 //     pool.get().expect("Failed to get connection from pool")
 // }
 impl Database {
     pub fn default() -> Database {
-        Database { pool: init_pool() }
+        Self {}
     }
     /// 从连接池中获取一个连接
     pub fn get_conn(&self) -> PooledConnection {
-        self.pool.get().expect("Failed to get connection from pool")
-    }
-    pub fn init_database(&mut self, pool: &DbPool) {
-        static INIT: Once = Once::new();
-
-        INIT.call_once(|| {
-            let pool = init_pool();
-            let mut conn = self.get_conn();
-
-            // 创建表（如果不存在）
-            diesel::sql_query(
-                r#"
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL
-            );
-            "#,
-            )
-            .execute(&mut conn)
-            .expect("Failed to create table");
-            println!("Database initialized successfully!");
-        });
+        let pool = get_db_pool().clone();
+        pool.get().expect("Failed to get connection from pool")
     }
 
     pub fn clear_database(&self, pool: DbPool) -> Result<(), String> {
@@ -101,5 +78,40 @@ impl Database {
         // .execute(&mut conn)
         .load::<Source>(&mut conn)
         .expect("Failed to get Sources")
+    }
+    pub fn get_items_collection(&self) -> Vec<Item> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+           SELECT * FROM items WHERE is_deleted = 0;
+             "#,
+        )
+        // .execute(&mut conn)
+        .load::<Item>(&mut conn)
+        .expect("Failed to get Sources")
+    }
+    pub fn get_attachments_collection(&self) -> Vec<Attachment> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+          SELECT * FROM attachments;
+             "#,
+        )
+        // .execute(&mut conn)
+        .load::<Attachment>(&mut conn)
+        .expect("Failed to get Sources")
+    }
+    pub fn delete_attachment(&self, attachment: Attachment) -> bool {
+        let mut conn = self.get_conn();
+        let ret = diesel::sql_query(
+            r#"
+         DELETE FROM Attachments WHERE id=$id;
+             "#,
+        )
+        .execute(&mut conn);
+        if !ret.is_ok() {
+            return false;
+        }
+        return true;
     }
 }

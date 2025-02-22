@@ -7,8 +7,8 @@ pub mod services;
 pub mod utils;
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, Utc};
 pub(crate) use objects::{Attachment, Item, Label, Project, Reminder, Section, Source};
-pub(crate) use objects::{Database, schema};
-pub(crate) use services::load_config;
+pub(crate) use objects::{BaseTrait, Database, schema};
+pub(crate) use services::{Store, load_config};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // let db = Database::default();

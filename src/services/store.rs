@@ -1,10 +1,15 @@
+use crate::BaseTrait;
 use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
-
 pub struct Store {}
-
+use once_cell::sync::OnceCell;
+use std::sync::Arc;
+static STOREINSTANCE: OnceCell<Arc<Store>> = OnceCell::new();
 impl Store {
-    pub fn instance() -> Store {
-        Store {}
+    pub fn new() -> Store {
+        Self {}
+    }
+    pub fn instance() -> Arc<Store> {
+        STOREINSTANCE.get_or_init(|| Arc::new(Store::new())).clone()
     }
     // signal
     pub fn source_added(source: Source) {}
@@ -41,7 +46,26 @@ impl Store {
 
     pub fn attachment_deleted(attachment: Attachment) {}
 
-    pub fn sources() -> Vec<Source> {
+    pub fn delete_attachment(&self, attachment: Attachment) {
+        if Database::default().delete_attachment(attachment.clone()) {
+            self.attachments().retain(|x| *x != attachment);
+        }
+    }
+    pub fn attachments(&self) -> Vec<Attachment> {
+        Database::default().get_attachments_collection()
+    }
+    pub fn sources(&self) -> Vec<Source> {
         Database::default().get_sources_collection()
+    }
+    pub fn items(&self) -> Vec<Item> {
+        Database::default().get_items_collection()
+    }
+    pub fn get_item(&self, id: String) -> Option<Item> {
+        for item in self.items() {
+            if item.id() == id {
+                return Some(item);
+            }
+        }
+        return None;
     }
 }
