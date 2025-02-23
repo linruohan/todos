@@ -62,7 +62,7 @@ impl Store {
     }
     pub fn get_item(&self, id: String) -> Option<Item> {
         for item in self.items() {
-            if item.id() == id {
+            if item.id.clone().unwrap() == id {
                 return Some(item);
             }
         }

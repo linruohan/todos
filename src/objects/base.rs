@@ -3,37 +3,6 @@ use std::{any::type_name, collections::HashMap};
 
 use super::{FilterItem, Item, Label, Project, Reminder, Section, Source};
 pub trait BaseTrait {
-    fn id(&self) -> String;
-    fn set_id(&mut self, value: String) {
-        let mut id = self.id();
-        id = value;
-    }
-    fn name(&self) -> String;
-    fn set_name(&mut self, value: String) {
-        let mut name = self.name().clone();
-        name = value;
-    }
-
-    fn keywords(&self) -> String;
-    fn set_keywords(&mut self, value: String) {
-        let mut keywords = self.keywords().clone();
-        keywords = value;
-    }
-    fn icon_name(&self) -> String;
-    fn set_icon_name(&mut self, value: String) {
-        let mut icon_name = self.icon_name().clone();
-        icon_name = value;
-    }
-    // signal
-    fn deleted(&self);
-    fn updated(&self, update_id: String);
-    fn archived(&self);
-    fn unarchived(&self);
-    fn loading(&self) -> bool;
-    fn loading_change(&self);
-    fn sensitive(&self) -> bool;
-    fn sensitive_change(&self);
-
     fn type_name(&self) -> &str {
         let full_name = type_name::<Self>();
         full_name.split("::").last().unwrap()
@@ -113,7 +82,8 @@ pub trait BaseTrait {
             self.filters().remove(&filter.id().clone());
         }
     }
+    fn id(&self) -> Option<&str>;
     fn id_string(&self) -> String {
-        self.id().clone()
+        self.id().unwrap().to_string()
     }
 }

@@ -1,4 +1,4 @@
-use crate::objects::{BaseTrait, DueDate};
+use crate::objects::{BaseObject, BaseTrait, DueDate};
 use crate::schema::items;
 use crate::utils::EMPTY_DATETIME;
 use crate::{Attachment, Database, Project};
@@ -51,50 +51,6 @@ impl Item {
 }
 
 impl BaseTrait for Item {
-    fn name(&self) -> String {
-        todo!()
-    }
-
-    fn keywords(&self) -> String {
-        todo!()
-    }
-
-    fn icon_name(&self) -> String {
-        todo!()
-    }
-
-    fn deleted(&self) {
-        todo!()
-    }
-
-    fn updated(&self, update_id: String) {
-        todo!()
-    }
-
-    fn archived(&self) {
-        todo!()
-    }
-
-    fn unarchived(&self) {
-        todo!()
-    }
-
-    fn loading(&self) -> bool {
-        todo!()
-    }
-
-    fn loading_change(&self) {
-        todo!()
-    }
-
-    fn sensitive(&self) -> bool {
-        todo!()
-    }
-
-    fn sensitive_change(&self) {
-        todo!()
-    }
-
     fn source(&self) -> crate::Source {
         todo!()
     }
@@ -103,7 +59,12 @@ impl BaseTrait for Item {
         todo!()
     }
 
-    fn id(&self) -> String {
-        self.id.clone().unwrap_or("".to_owned())
+    fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
+}
+
+pub struct ItemExtra {
+    item: Item,
+    base: BaseObject,
 }
