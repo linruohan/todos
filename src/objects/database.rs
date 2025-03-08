@@ -13,8 +13,8 @@ use std::sync::Arc;
 use std::sync::Once;
 use std::vec;
 
-use super::Attachment;
-use super::Item;
+use super::Section;
+use super::{Attachment, Item, Label, Project, Reminder};
 pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
 // 定义全局的数据库连接池
 pub static DB_POOL: OnceCell<DbPool> = OnceCell::new();
@@ -113,5 +113,49 @@ impl Database {
             return false;
         }
         return true;
+    }
+
+    pub(crate) fn get_projects_collection(&self) -> Vec<Project> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+          SELECT * FROM Projects WHERE is_deleted = 0 ORDER BY child_order;
+             "#,
+        )
+        .load::<Project>(&mut conn)
+        .expect("Failed to get Project")
+    }
+
+    pub(crate) fn get_labels_collection(&self) -> Vec<Label> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+          SELECT * FROM Labels;
+             "#,
+        )
+        .load::<Label>(&mut conn)
+        .expect("Failed to get Label")
+    }
+
+    pub(crate) fn get_reminders_collection(&self) -> Vec<Reminder> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+          SELECT id, item_id, type, due, mm_offset FROM Reminders;
+             "#,
+        )
+        .load::<Reminder>(&mut conn)
+        .expect("Failed to get Label")
+    }
+
+    pub(crate) fn get_sections_collection(&self) -> Vec<Section> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+          SELECT * FROM Sections WHERE is_deleted = 0;
+             "#,
+        )
+        .load::<Section>(&mut conn)
+        .expect("Failed to get Section")
     }
 }

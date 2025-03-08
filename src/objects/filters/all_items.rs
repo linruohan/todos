@@ -9,8 +9,8 @@ pub struct AllItems {
 }
 
 impl AllItems {
-    pub fn get_default(&self) -> AllItems {
-        AllItems {
+    pub fn get_default() -> AllItems {
+        Self {
             base: BaseObject::new(
                 "All Tasks".to_string(),
                 format!("{};{}", "all tasks", "all"),
@@ -18,62 +18,5 @@ impl AllItems {
                 "all-items-view".to_string(),
             ),
         }
-    }
-}
-impl BaseTrait for AllItems {
-    fn deleted(&self) {
-        todo!()
-    }
-
-    fn updated(&self, update_id: String) {
-        todo!()
-    }
-
-    fn archived(&self) {
-        todo!()
-    }
-
-    fn unarchived(&self) {
-        todo!()
-    }
-
-    fn loading(&self) -> bool {
-        todo!()
-    }
-
-    fn loading_change(&self) {
-        todo!()
-    }
-
-    fn sensitive(&self) -> bool {
-        todo!()
-    }
-
-    fn sensitive_change(&self) {
-        todo!()
-    }
-
-    fn source(&self) -> crate::objects::Source {
-        todo!()
-    }
-
-    fn id(&self) -> String {
-        todo!()
-    }
-
-    fn name(&self) -> String {
-        todo!()
-    }
-
-    fn keywords(&self) -> String {
-        todo!()
-    }
-
-    fn icon_name(&self) -> String {
-        todo!()
-    }
-
-    fn filters(&self) -> HashMap<String, FilterItem> {
-        todo!()
     }
 }

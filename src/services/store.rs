@@ -57,8 +57,35 @@ impl Store {
     pub fn sources(&self) -> Vec<Source> {
         Database::default().get_sources_collection()
     }
+    pub fn sections(&self) -> Vec<Section> {
+        Database::default().get_sections_collection()
+    }
+    pub fn projects(&self) -> Vec<Project> {
+        Database::default().get_projects_collection()
+    }
     pub fn items(&self) -> Vec<Item> {
         Database::default().get_items_collection()
+    }
+    pub fn labels(&self) -> Vec<Label> {
+        Database::default().get_labels_collection()
+    }
+    pub fn reminders(&self) -> Vec<Reminder> {
+        Database::default().get_reminders_collection()
+    }
+    pub fn is_database_empty(&self) -> bool {
+        self.projects().len() <= 0
+    }
+    pub fn is_sources_empty(&self) -> bool {
+        self.sources().len() <= 0
+    }
+    pub fn get_collection_by_type(&self, obj_type: &dyn BaseTrait) -> Vec<Box<dyn BaseTrait>> {
+        match obj_type.object_type() {
+            crate::enums::ObjectType::PROJECT => self.projects(),
+            crate::enums::ObjectType::SECTION => self.sections(),
+            crate::enums::ObjectType::ITEM => self.items(),
+            crate::enums::ObjectType::LABEL => self.labels(),
+            _ => Vec::new(),
+        }
     }
     pub fn get_item(&self, id: String) -> Option<Item> {
         for item in self.items() {

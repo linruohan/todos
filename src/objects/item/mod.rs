@@ -1,5 +1,5 @@
 mod imp;
-use super::Project;
+use super::BaseObject;
 use crate::Database;
 use crate::schema::items::{self, id};
 use anyhow::Error;
@@ -8,7 +8,11 @@ use diesel::prelude::*;
 pub(crate) use imp::Item;
 use items::table;
 use std::ops::Deref;
-impl Item {
+pub struct Items {
+    item: Item,
+    base: BaseObject,
+}
+impl Items {
     pub fn get_item(item_id: String) -> Item {
         let mut conn = Database::default().get_conn();
         items::table
