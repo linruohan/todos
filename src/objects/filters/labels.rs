@@ -1,95 +1,68 @@
-/*
-* Copyright © 2023 Alain M. (https://github.com/alainm23/planify)
-*
-* This program is free software; you can redistribute it and/or
-* modify it under the terms of the GNU General Public
-* License as published by the Free Software Foundation; either
-* version 3 of the License, or (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* General Public License for more details.
-*
-* You should have received a copy of the GNU General Public
-* License along with this program; if not, write to the
-* Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-* Boston, MA 02110-1301 USA
-*
-* Authored by: Alain M. <alainmh23@gmail.com>
-*/
+use std::{any::Any, collections::HashMap};
 
-public class Objects.Filters.Labels : Objects.BaseObject {
-    private static Labels? _instance;
-    public static Labels get_default () {
-        if (_instance == null) {
-            _instance = new Labels ();
-        }
+use uuid::Uuid;
 
-        return _instance;
-    }
+use super::FilterItem;
+use crate::{BaseObject, BaseTrait};
+use crate::{Store, enums::FilterType};
+pub struct Labels {
+    pub base: BaseObject,
+}
 
-    int? _count = null;
-    public int count {
-        get {
-            if (_count == null) {
-                _count = Services.Store.instance ().get_items_has_labels ().size;
-            }
-
-            return _count;
-        }
-
-        set {
-            _count = value;
+impl Labels {
+    pub fn get_default() -> Labels {
+        Self {
+            base: BaseObject::new(
+                "Labels".to_string(),
+                format!("{};{}", "label", "filters"),
+                "tag-outline-symbolic".to_string(),
+                FilterType::LABELS.to_string(),
+            ),
         }
     }
+    pub fn count(&self) -> i32 {
+        Store::instance().get_items_has_labels().len()
+    }
+    pub fn count_updated(&self) {
 
-    public signal void count_updated ();
+        // Store::instance().label_added.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-    construct {
-        name = _("Labels");
-        keywords = "%s;%s".printf (_("label"), _("filters"));
-        icon_name = "tag-outline-symbolic";
-        view_id = FilterType.LABELS.to_string ();
+        // Store::instance().label_deleted.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-        Services.Store.instance ().label_added.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
+        // Store::instance().label_updated.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-        Services.Store.instance ().label_deleted.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
+        // Store::instance().item_added.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-        Services.Store.instance ().label_updated.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
-        
-        Services.Store.instance ().item_added.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
+        // Store::instance().item_deleted.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-        Services.Store.instance ().item_deleted.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
+        // Store::instance().item_archived.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-        Services.Store.instance ().item_archived.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
+        // Store::instance().item_unarchived.connect ((item) => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
 
-        Services.Store.instance ().item_unarchived.connect ((item) => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
-
-        Services.Store.instance ().item_updated.connect (() => {
-            _count = Services.Store.instance ().get_items_has_labels ().size;
-            count_updated ();
-        });
+        // Store::instance().item_updated.connect (() => {
+        //     _count = Store::instance().get_items_has_labels ().size;
+        //     count_updated ();
+        // });
     }
 }
