@@ -95,4 +95,22 @@ impl Store {
         }
         return None;
     }
+    pub fn get_items_completed(&self) -> Vec<Item> {
+        let return_value = Vec::new();
+        for item in self.items() {
+            if item.checked.unwrap() && !item.was_archived.unwrap() {
+                return_value.push(item);
+            }
+        }
+        return return_value;
+    }
+
+    pub fn get_source(&self, id: String) -> Option<Source> {
+        for source in self.sources() {
+            if source.id.clone().unwrap() == id {
+                return Some(source);
+            }
+        }
+        return None;
+    }
 }

@@ -1,7 +1,8 @@
 pub mod imp;
-pub struct Label {}
-impl Label {
-    pub(crate) fn source(&self) -> super::Source {
-        todo!()
-    }
+pub(crate) use imp::Label;
+pub struct Labels {
+    label: Label,
+}
+impl Labels {
+    pub(crate) fn source(&self) -> super::Source {}
 }

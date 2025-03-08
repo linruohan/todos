@@ -1,7 +1,7 @@
 use crate::objects::{BaseObject, BaseTrait, DueDate};
 use crate::schema::items;
 use crate::utils::EMPTY_DATETIME;
-use crate::{Attachment, Database, Project};
+use crate::{Attachment, Database, Label, Project};
 use diesel::QueryDsl;
 use diesel::Queryable;
 use diesel::prelude::*;
@@ -45,6 +45,19 @@ impl Item {
     pub fn set_due(&mut self, due: DueDate) {
         self.due = Some(serde_json::to_string(&due).expect("failed to convert due date"));
     }
+    pub fn labels(&self) -> Vec<Label> {
+        match self.labels {
+            Some(labels) => {
+                serde_json::from_str::<Vec<Label>>(&labels).expect("failed to convert labels")
+            }
+            None => Vec::new(),
+        }
+    }
+    fn get_lables(&self) -> Vec<Label> {
+        let return_value = Vec::new();
+        for label in self.labels {}
+    }
+
     pub fn has_due(&self) -> bool {
         self.due().datetime() == EMPTY_DATETIME
     }
