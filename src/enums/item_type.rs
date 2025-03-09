@@ -1,19 +1,23 @@
-use serde::Serialize;
+use std::fmt;
 
-#[derive(Serialize)]
+use strum::{Display, EnumString};
+#[derive(Debug, Clone, PartialEq, EnumString)]
+#[strum(serialize_all = "camelCase")] // 自动处理连字符格式
 pub enum ItemType {
     TASK,
     NOTE,
 }
 impl ItemType {
-    pub fn to_string(&self) -> String {
-        serde_json::to_string(self).unwrap().to_lowercase()
-    }
     pub fn parse(&self, value: Option<&str>) -> ItemType {
         match value {
             Some("task") => return ItemType::TASK,
             Some("note") => return ItemType::NOTE,
             _ => ItemType::TASK,
         }
+    }
+}
+impl fmt::Display for ItemType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string().to_lowercase())
     }
 }

@@ -1,6 +1,8 @@
-use serde::Serialize;
+use std::fmt;
 
-#[derive(Serialize)]
+use strum::{Display, EnumString};
+#[derive(Debug, Clone, PartialEq, EnumString)]
+#[strum(serialize_all = "camelCase")] // 自动处理连字符格式
 pub enum FilterType {
     INBOX,
     TODAY,
@@ -10,11 +12,8 @@ pub enum FilterType {
     COMPLETED,
 }
 impl FilterType {
-    pub fn to_string(&self) -> String {
-        serde_json::to_string(&self).unwrap().to_lowercase()
-    }
     pub fn get_name(&self) -> String {
-        let s = serde_json::to_string(self).unwrap().to_lowercase();
+        let s = self.to_string();
         format!("{}{}", &s[0..1].to_uppercase(), &s[1..])
     }
 
@@ -48,5 +47,10 @@ impl FilterType {
                 return if dark { "#ffbe6f" } else { "#ff7800" };
             }
         }
+    }
+}
+impl fmt::Display for FilterType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string().to_lowercase())
     }
 }

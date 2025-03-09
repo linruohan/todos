@@ -1,12 +1,15 @@
-use serde::Serialize;
+use std::fmt;
 
-#[derive(Serialize)]
+use strum::{Display, EnumString};
+#[derive(Debug, Clone, PartialEq, EnumString)]
+#[strum(serialize_all = "camelCase")]
 pub enum ReminderType {
     ABSOLUTE,
     RELATIVE,
 }
-impl ReminderType {
-    pub fn to_string(&self) -> String {
-        serde_json::to_string(self).unwrap().to_lowercase()
+
+impl fmt::Display for ReminderType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string().to_lowercase())
     }
 }

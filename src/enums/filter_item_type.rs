@@ -1,6 +1,8 @@
-use serde::Serialize;
+use std::fmt;
 
-#[derive(Serialize, Debug, Clone)]
+use strum::{Display, EnumString};
+#[derive(Debug, Clone, PartialEq, EnumString)]
+#[strum(serialize_all = "camelCase")]
 pub enum FilterItemType {
     PRIORITY = 0,
     LABEL = 1,
@@ -8,9 +10,6 @@ pub enum FilterItemType {
     SECTION = 3,
 }
 impl FilterItemType {
-    pub fn to_string(&self) -> String {
-        serde_json::to_string(self).unwrap().to_lowercase()
-    }
     pub fn get_title(&self) -> &str {
         match self {
             FilterItemType::PRIORITY => "Priority",
@@ -26,5 +25,10 @@ impl FilterItemType {
             FilterItemType::DueDate => "month-symbolic",
             FilterItemType::SECTION => "arrow3-right-symbolic",
         }
+    }
+}
+impl fmt::Display for FilterItemType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string().to_lowercase())
     }
 }
