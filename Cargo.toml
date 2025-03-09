@@ -33,6 +33,8 @@ config = "0.15.9" # 用于读取配置文件
 # wasm-bindgen-futures = "0.4.49"
 derive_builder = "0.20.2"
 strum = { version = "0.27.1", features = ["derive"] }
+rand = "0.9.0"
+
 [dev-dependencies]
 assert_cmd = "2.0.14"
 tempfile = "3.18.0"

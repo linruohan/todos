@@ -22,7 +22,7 @@ impl Labels {
                 "tag-outline-symbolic".to_string(),
                 FilterType::LABELS.to_string(),
             ),
-            count: Some(0),
+            count: None,
         }
     }
     pub fn count(&self) -> usize {

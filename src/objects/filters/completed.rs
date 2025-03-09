@@ -21,7 +21,7 @@ impl Completed {
                 "check-round-outline-symbolic".to_string(),
                 FilterType::COMPLETED.to_string(),
             ),
-            count: Some(0),
+            count: None,
         }
     }
     pub fn count(&self) -> usize {

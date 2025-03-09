@@ -1,15 +1,16 @@
+#[derive(Debug, Clone)]
 pub struct Color {
-    id: u32,
-    name: String,
-    hexadecimal: String,
+    pub id: u32,
+    pub name: String,
+    pub hexadecimal: String,
 }
 
 impl Color {
-    fn new(id: u32, name: String, hexadecimal: String) -> Self {
+    pub fn new(id: u32, name: &str, hexadecimal: &str) -> Color {
         Self {
             id,
-            name,
-            hexadecimal,
+            name: name.to_string(),
+            hexadecimal: hexadecimal.to_string(),
         }
     }
 }
