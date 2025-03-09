@@ -53,9 +53,8 @@ impl Item {
             None => Vec::new(),
         }
     }
-    fn get_lables(&self) -> Vec<Label> {
-        let return_value = Vec::new();
-        for label in self.labels {}
+    pub fn get_lables(&self) -> Vec<Label> {
+        self.labels()
     }
 
     pub fn has_due(&self) -> bool {

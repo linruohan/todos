@@ -16,7 +16,7 @@ impl Pinboard {
             ),
         }
     }
-    pub fn pinboard_count(&self) -> i32 {
+    pub fn pinboard_count(&self) -> usize {
         Store::instance().get_items_pinned(false).len()
     }
 

@@ -98,13 +98,55 @@ impl Store {
     pub fn get_items_completed(&self) -> Vec<Item> {
         let return_value = Vec::new();
         for item in self.items() {
-            if item.checked.unwrap() && !item.was_archived.unwrap() {
+            if item.checked == Some(1) && !item.was_archived != 1 {
+                return_value.push(item);
+            }
+        }
+        return return_value;
+    }
+    pub fn get_items_has_labels(&self) -> Vec<Item> {
+        let return_value = Vec::new();
+        for item in self.items() {
+            if (item.has_labels() && item.completed == Some(0) && !item.was_archived()) {
                 return_value.push(item);
             }
         }
         return return_value;
     }
 
+    pub fn get_items_pinned(&self, checked: bool) -> Vec<Item> {
+        let checked = checked as i32;
+        let return_value = Vec::new();
+        for item in self.items() {
+            if (item.pinned == Some(1) && item.checked == Some(checked) && !item.was_archived()) {
+                return_value.push(item);
+            }
+        }
+        return return_value;
+    }
+    pub fn get_items_by_priority(&self, priority: i32, checked: bool) -> Vec<Item> {
+        let checked = checked as i32;
+        let return_value = Vec::new();
+        for item in self.items() {
+            if item.priority == Some(priority)
+                && item.checked == Some(checked)
+                && !item.was_archived()
+            {
+                return_value.push(item);
+            }
+        }
+
+        return return_value;
+    }
+    pub fn get_items_with_reminders(&self) -> Vec<Item> {
+        let return_value = Vec::new();
+        for item in self.items() {
+            if (item.has_reminders() && item.completed == Some(0) && !item.was_archived()) {
+                return_value.push(item);
+            }
+        }
+        return return_value;
+    }
     pub fn get_source(&self, id: String) -> Option<Source> {
         for source in self.sources() {
             if source.id.clone().unwrap() == id {

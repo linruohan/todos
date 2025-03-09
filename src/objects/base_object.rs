@@ -2,6 +2,7 @@ use crate::enums::ObjectType;
 use std::{any::type_name, collections::HashMap};
 
 use super::{FilterItem, Item, Label, Project, Reminder, Section, Source};
+#[derive(Debug, Clone)]
 pub struct BaseObject {
     pub name: String,
     pub keywords: String,

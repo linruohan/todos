@@ -1,8 +1,11 @@
-use crate::{BaseObject, Store};
-
+use crate::{BaseObject, Store, Util};
+use derive_builder::Builder;
+#[derive(Builder)]
 pub struct Priority {
     base: BaseObject,
-    priority: i32,
+    #[builder(default, setter(into, strip_option))]
+    pub count: Option<usize>,
+    pub priority: i32,
 }
 impl Priority {
     pub fn get_default(priority: i32) -> Priority {
@@ -18,10 +21,12 @@ impl Priority {
             priority,
         }
     }
-    pub fn count(&self) -> i32 {
-        Store::instance()
-            .get_items_by_priority(self.priority, false)
-            .len()
+    pub fn count(&self) -> usize {
+        self.count.clone().unwrap_or(
+            Store::instance()
+                .get_items_by_priority(self.priority, false)
+                .len(),
+        )
     }
     pub fn count_updated(&self) {
 

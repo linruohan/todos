@@ -1,9 +1,9 @@
-use std::fmt;
-
+use std::{default, fmt};
 use strum::{Display, EnumString};
-#[derive(Debug, Clone, PartialEq, EnumString)]
+#[derive(Debug, Clone, PartialEq, EnumString, Default)]
 #[strum(serialize_all = "camelCase")]
 pub enum FilterItemType {
+    #[default]
     PRIORITY = 0,
     LABEL = 1,
     DueDate = 2,

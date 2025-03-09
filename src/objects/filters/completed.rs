@@ -1,11 +1,15 @@
 use std::{any::Any, collections::HashMap};
 
-use uuid::Uuid;
-
 use super::FilterItem;
 use crate::{BaseObject, BaseTrait, Store, enums::FilterType};
+use derive_builder::Builder;
+use uuid::Uuid;
+#[derive(Builder)]
+
 pub struct Completed {
     pub base: BaseObject,
+    #[builder(default, setter(into, strip_option))]
+    pub count: Option<usize>,
 }
 
 impl Completed {
@@ -17,10 +21,13 @@ impl Completed {
                 "check-round-outline-symbolic".to_string(),
                 FilterType::COMPLETED.to_string(),
             ),
+            count: Some(0),
         }
     }
-    pub fn count(&self) -> i32 {
-        Store::instance().get_items_completed().len()
+    pub fn count(&self) -> usize {
+        self.count
+            .clone()
+            .unwrap_or(Store::instance().get_items_completed().len())
     }
     pub fn count_updated() {
         //Store::instance().item_added.connect (() => {
