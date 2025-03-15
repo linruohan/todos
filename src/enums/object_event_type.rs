@@ -8,7 +8,7 @@ pub enum ObjectEventType {
     UPDATE,
 }
 impl ObjectEventType {
-    pub fn parse(&self, value: Option<&str>) -> ObjectEventType {
+    pub fn parse(value: Option<&str>) -> ObjectEventType {
         match value {
             Some("insert") => ObjectEventType::INSERT,
             Some("update") => ObjectEventType::UPDATE,

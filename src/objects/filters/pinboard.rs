@@ -3,7 +3,7 @@ use std::fmt::format;
 use crate::{BaseObject, Store, enums::FilterType};
 
 pub struct Pinboard {
-    base: BaseObject,
+    pub base: BaseObject,
 }
 impl Pinboard {
     pub fn get_default() -> Pinboard {

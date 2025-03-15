@@ -12,7 +12,7 @@ pub enum SourceType {
     CALDAV,
 }
 impl SourceType {
-    pub fn parse(value: Option<&str>) -> Self {
+    pub fn parse(value: Option<&str>) -> SourceType {
         value
             .and_then(|s| s.parse().ok())
             .unwrap_or(SourceType::NONE)

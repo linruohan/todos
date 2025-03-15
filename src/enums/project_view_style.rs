@@ -8,7 +8,7 @@ pub enum ProjectViewStyle {
     EMOJI,
 }
 impl ProjectViewStyle {
-    pub fn parse(&self, value: Option<&str>) -> ProjectViewStyle {
+    pub fn parse(value: Option<&str>) -> ProjectViewStyle {
         match value {
             Some("progress") => ProjectViewStyle::PROGRESS,
             Some("emoji") => ProjectViewStyle::EMOJI,

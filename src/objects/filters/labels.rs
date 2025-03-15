@@ -9,7 +9,7 @@ use derive_builder::Builder;
 #[derive(Builder)]
 pub struct Labels {
     pub base: BaseObject,
-    #[builder(default, setter(into, strip_option))]
+    #[builder(default=Some(Store::instance().get_items_has_labels().len()), setter(into, strip_option))]
     pub count: Option<usize>,
 }
 
@@ -24,11 +24,6 @@ impl Labels {
             ),
             count: None,
         }
-    }
-    pub fn count(&self) -> usize {
-        self.count
-            .clone()
-            .unwrap_or(Store::instance().get_items_has_labels().len())
     }
     pub fn count_updated(&self) {
 

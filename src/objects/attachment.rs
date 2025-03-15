@@ -16,12 +16,12 @@ use std::ops::Deref;
 #[diesel(table_name = attachments)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Attachment {
-    id: Option<String>,
-    item_id: Option<String>,
-    file_type: Option<String>,
-    file_name: Option<String>,
-    file_size: Option<String>,
-    file_path: Option<String>,
+    pub id: Option<String>,
+    pub item_id: Option<String>,
+    pub file_type: Option<String>,
+    pub file_name: Option<String>,
+    pub file_size: Option<String>,
+    pub file_path: Option<String>,
 }
 
 impl Attachment {

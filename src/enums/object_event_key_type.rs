@@ -10,7 +10,7 @@ pub enum ObjectEventKeyType {
     SECTION,
 }
 impl ObjectEventKeyType {
-    pub fn parse(&self, value: Option<&str>) -> ObjectEventKeyType {
+    pub fn parse(value: Option<&str>) -> ObjectEventKeyType {
         match value {
             Some("content") => ObjectEventKeyType::CONTENT,
             Some("description") => ObjectEventKeyType::DESCRIPTION,

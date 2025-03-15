@@ -2,12 +2,10 @@ use crate::enums::FilterItemType;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Builder, Default)]
+#[builder(setter(strip_option))]
 pub struct FilterItem {
-    #[builder(setter(strip_option))]
     pub filter_type: FilterItemType,
-    #[builder(default, setter(strip_option))]
     pub name: String,
-    #[builder(default, setter(strip_option))]
     pub value: String,
 }
 impl FilterItem {

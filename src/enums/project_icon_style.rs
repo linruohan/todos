@@ -8,7 +8,7 @@ pub enum ProjectIconStyle {
     BOARD,
 }
 impl ProjectIconStyle {
-    pub fn parse(&self, value: Option<&str>) -> ProjectIconStyle {
+    pub fn parse(value: Option<&str>) -> ProjectIconStyle {
         match value {
             Some("list") => ProjectIconStyle::LIST,
             Some("board") => ProjectIconStyle::BOARD,

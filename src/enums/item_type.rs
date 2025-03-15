@@ -8,7 +8,7 @@ pub enum ItemType {
     NOTE,
 }
 impl ItemType {
-    pub fn parse(&self, value: Option<&str>) -> ItemType {
+    pub fn parse(value: Option<&str>) -> ItemType {
         match value {
             Some("task") => return ItemType::TASK,
             Some("note") => return ItemType::NOTE,

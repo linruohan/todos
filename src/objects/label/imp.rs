@@ -10,12 +10,22 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 #[derive(
-    QueryableByName, Builder, Default, Queryable, PartialEq, Eq, Selectable, Serialize, Debug,
+    QueryableByName,
+    Builder,
+    Default,
+    Queryable,
+    PartialEq,
+    Eq,
+    Selectable,
+    Deserialize,
+    Serialize,
+    Debug,
 )]
 #[diesel(table_name = labels)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 #[builder(default, setter(into, strip_option))]
 pub struct Label {
+    pub id: Option<String>,
     #[builder(setter(strip_option))]
     pub name: Option<String>,
     #[builder(setter(strip_option))]

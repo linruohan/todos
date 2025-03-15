@@ -366,15 +366,16 @@ impl Util {
     //         return text.length > 0;
     //     }
 
-    //     public string get_short_name (string name, int size = Constants.SHORT_NAME_SIZE) {
-    //         string returned = name;
-
-    //         if (name.length > size) {
-    //             returned = name.slice (0, size) + "…";
-    //         }
-
-    //         return returned;
-    //     }
+    pub fn get_short_name(name: String, size: usize) -> String {
+        let mut size_default = size;
+        if size_default == 0 {
+            size_default = constants::SHORT_NAME_SIZE;
+        }
+        match size_default {
+            s if s < name.len() => format!("{}...", &name[0..s]),
+            _ => name.clone(),
+        }
+    }
 
     //     public void clear_database (string title, string message, Gtk.Window window) {
     //         var dialog = new Adw.AlertDialog (title, message);

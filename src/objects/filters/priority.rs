@@ -2,7 +2,7 @@ use crate::{BaseObject, Store, Util};
 use derive_builder::Builder;
 #[derive(Builder)]
 pub struct Priority {
-    base: BaseObject,
+    pub base: BaseObject,
     #[builder(default, setter(into, strip_option))]
     pub count: Option<usize>,
     pub priority: i32,
