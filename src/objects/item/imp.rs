@@ -89,7 +89,7 @@ impl Item {
         return None;
     }
     pub fn short_content(&self) -> String {
-        Util::get_short_name(self.content.clone(), 0)
+        Util::get_default().get_short_name(self.content.clone(), 0)
     }
     pub fn priority_icon(&self) -> String {
         match self.priority {
@@ -188,7 +188,7 @@ impl Item {
     pub fn check_labels(&self, new_labels: HashMap<String, Label>) {
         for (key, label) in &new_labels {
             if self.get_label(label.id.clone().unwrap()) == None {
-                self.add_label_if_not_exist(label);
+                self.add_label_if_not_exist(label.clone());
             }
         }
         for label in self.labels() {
@@ -207,15 +207,15 @@ impl Item {
         self.parent_id = Some(parent.id.clone().unwrap());
     }
 
-    fn add_label_if_not_exist(&self, label: Label_) {
+    fn add_label_if_not_exist(&self, label: Label) {
         todo!()
     }
 
-    fn delete_item_label(&self, unwrap: String) -> _ {
+    pub fn delete_item_label(&self, unwrap: String) -> _ {
         todo!()
     }
     pub fn update_local(&self) {
-        Store::instance().update_item(self.clone(), "");
+        Store::instance().update_item(self.clone(), "".to_string());
     }
     pub fn update(&self, update_id: String) {
         if let Some(project) = self.project() {
@@ -223,16 +223,9 @@ impl Item {
                 SourceType::LOCAL => {
                     Store::instance().update_item(self.clone(), update_id);
                 }
-                SourceType::TODOIST => {
-                    // TODO: implement cloud update
-                }
-                SourceType::CALDAV => {
-                    // TODO: implement cloud update
-                }
                 _ => {}
             }
         }
-        Store::instance().update_item(self.clone(), update_id);
     }
 }
 
@@ -241,16 +234,7 @@ impl BaseTrait for Item {
         todo!()
     }
 
-    fn filters(&self) -> std::collections::HashMap<String, crate::objects::FilterItem> {
-        todo!()
-    }
-
     fn id(&self) -> Option<&str> {
         self.id.as_deref()
     }
-}
-
-pub struct ItemExtra {
-    item: Item,
-    base: BaseObject,
 }

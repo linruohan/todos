@@ -16,6 +16,25 @@ pub struct Project {
     pub parent_id: Option<String>,
     pub name: String,
     pub source_id: Option<String>,
+    pub color: Option<String>,
+    pub backend_type: Option<String>,
+    pub inbox_project: Option<i32>,
+    pub team_inbox: Option<i32>,
+    pub child_order: Option<i32>,
+    pub is_deleted: Option<i32>,
+    pub is_archived: Option<i32>,
+    pub is_favorite: Option<i32>,
+    pub shared: Option<i32>,
+    pub view_style: Option<String>,
+    pub sort_order: Option<i32>,
+    pub collapsed: Option<i32>,
+    pub icon_style: Option<String>,
+    pub emoji: Option<String>,
+    pub show_completed: Option<i32>,
+    pub description: Option<String>,
+    pub due_date: Option<String>,
+    pub inbox_section_hidded: Option<i32>,
+    pub sync_id: Option<String>,
 }
 
 impl Project {
@@ -25,22 +44,13 @@ impl Project {
             .unwrap_or(Source::default())
     }
     pub fn source_type(&self) -> SourceType {
-        let source_type = self.source().source_type;
-        match source_type {
-            Some(ref st) => SourceType::parse(Some(st)),
-            None => SourceType::NONE,
-        }
+        self.source().source_type()
     }
 }
 impl BaseTrait for Project {
     fn source(&self) -> Source {
         self.source()
     }
-
-    fn filters(&self) -> std::collections::HashMap<String, crate::objects::FilterItem> {
-        self.filters.clone()
-    }
-
     fn id(&self) -> Option<&str> {
         self.id.as_deref()
     }

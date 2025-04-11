@@ -8,30 +8,41 @@ use crate::{enums::SourceType, objects::BaseTrait, schema::sources};
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Source {
     pub id: Option<String>,
-    pub source_type: Option<String>,
+    pub source_type: String,
+    pub display_name: Option<String>,
+    pub added_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub is_visible: Option<i32>,
+    pub child_order: Option<i32>,
+    pub sync_server: Option<i32>,
+    pub last_sync: Option<String>,
+    pub data: Option<String>,
 }
 
 impl Source {
     pub fn default() -> Source {
-        Self { id: todo!() }
+        Self {
+            id: None,
+            source_type: "".to_string(),
+            display_name: todo!(),
+            added_at: todo!(),
+            updated_at: todo!(),
+            is_visible: todo!(),
+            child_order: todo!(),
+            sync_server: todo!(),
+            last_sync: todo!(),
+            data: todo!(),
+        }
     }
     pub fn source_type(&self) -> SourceType {
-        match self.source_type {
-            Some(ref st) => SourceType::parse(Some(st)),
-            None => SourceType::NONE,
-        }
+        SourceType::parse(Some(&self.source_type))
     }
 }
 impl BaseTrait for Source {
-    fn id(&self) -> String {
-        self.id.clone().unwrap()
-    }
-
     fn source(&self) -> Source {
         todo!()
     }
-
-    fn filters(&self) -> std::collections::HashMap<String, crate::objects::FilterItem> {
-        todo!()
+    fn id(&self) -> Option<&str> {
+        self.id.as_deref()
     }
 }

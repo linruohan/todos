@@ -35,7 +35,6 @@ impl BaseObject {
         false
     }
     pub fn sensitive_change(&self) {}
-
     pub fn get_filter(&self, id: String) -> FilterItem {
         if let Some(filter) = self.filters.get(&id) {
             filter.clone()
@@ -44,7 +43,9 @@ impl BaseObject {
         }
     }
     pub fn add_filter(&mut self, filter: FilterItem) {
-        self.filters.insert(filter.id().clone(), filter);
+        if !self.filters.contains_key(&filter.id().clone()) {
+            self.filters.insert(filter.id().clone(), filter);
+        }
     }
     pub fn update_filter(&mut self, update_filter: FilterItem) {
         if let Some(filter) = self.filters.get_mut(&update_filter.id().clone()) {

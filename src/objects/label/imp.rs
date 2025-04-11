@@ -1,3 +1,4 @@
+use crate::Util;
 use crate::enums::SourceType;
 use crate::objects::{BaseObject, BaseTrait, DueDate};
 use crate::schema::labels;
@@ -5,6 +6,7 @@ use crate::utils::EMPTY_DATETIME;
 use crate::{Attachment, Database, Project, Source, Store};
 use derive_builder::Builder;
 use diesel::QueryDsl;
+
 use diesel::Queryable;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -20,6 +22,7 @@ use std::ops::Deref;
     Deserialize,
     Serialize,
     Debug,
+    Clone,
 )]
 #[diesel(table_name = labels)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
@@ -60,6 +63,11 @@ impl Label {
             None => SourceType::NONE,
         }
     }
+    fn update_label_count(&self) -> usize {
+        Store::instance()
+            .get_items_by_label(self.clone(), false)
+            .len()
+    }
     pub fn source_id(&self) -> String {
         self.source_id
             .clone()
@@ -67,6 +75,22 @@ impl Label {
     }
     pub fn source_type(&self) -> SourceType {
         self.source().source_type()
+    }
+
+    pub fn label_count(&self) -> usize {
+        let mut count = 0;
+        count = self.update_label_count();
+        count
+    }
+    pub fn short_name(&self) -> String {
+        Util::get_default().get_short_name(self.name.clone().unwrap_or_default(), 0)
+    }
+    pub fn delete_label(&self) {
+        let items = Store::instance().get_items_by_label(self.clone(), false);
+        for item in items {
+            item.delete_item_label(self.id.clone().unwrap_or_default());
+        }
+        Store::instance().delete_label(self.clone());
     }
 }
 
@@ -77,11 +101,7 @@ impl BaseTrait for Label {
             .unwrap_or(Source::default())
     }
 
-    fn filters(&self) -> std::collections::HashMap<String, crate::objects::FilterItem> {
-        todo!()
-    }
-
     fn id(&self) -> Option<&str> {
-        todo!()
+        self.id.as_deref()
     }
 }

@@ -61,27 +61,7 @@ pub trait BaseTrait {
     fn to_json(&self) -> &str {
         ""
     }
-    fn filters(&self) -> HashMap<String, FilterItem>;
-    fn get_filter(&self, id: String) -> FilterItem {
-        if let Some(filter) = self.filters().get(&id) {
-            filter.clone()
-        } else {
-            FilterItem::default()
-        }
-    }
-    fn add_filter(&mut self, filter: FilterItem) {
-        self.filters().insert(filter.id().clone(), filter);
-    }
-    fn update_filter(&mut self, update_filter: FilterItem) {
-        if let Some(filter) = self.filters().get_mut(&update_filter.id().clone()) {
-            *filter = update_filter;
-        }
-    }
-    fn remove_filter(&mut self, filter: FilterItem) {
-        if self.filters().contains_key(&filter.id().clone()) {
-            self.filters().remove(&filter.id().clone());
-        }
-    }
+
     fn id(&self) -> Option<&str>;
     fn id_string(&self) -> String {
         self.id().unwrap().to_string()

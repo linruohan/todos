@@ -366,7 +366,7 @@ impl Util {
     //         return text.length > 0;
     //     }
 
-    pub fn get_short_name(name: String, size: usize) -> String {
+    pub fn get_short_name(&self, name: String, size: usize) -> String {
         let mut size_default = size;
         if size_default == 0 {
             size_default = constants::SHORT_NAME_SIZE;

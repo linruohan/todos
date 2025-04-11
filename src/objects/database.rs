@@ -1,5 +1,6 @@
 use crate::Source;
-use crate::schema::sources;
+use crate::schema::{attachments, labels, projects, reminders, sections, sources};
+use diesel::QueryDsl;
 use diesel::SqliteConnection;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
@@ -14,6 +15,7 @@ use std::sync::Once;
 use std::vec;
 
 use super::Section;
+use super::schema::items;
 use super::{Attachment, Item, Label, Project, Reminder};
 pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
 // 定义全局的数据库连接池
@@ -68,17 +70,48 @@ impl Database {
         Ok(())
     }
 
+    // sources
     pub fn get_sources_collection(&self) -> Vec<Source> {
         let mut conn = self.get_conn();
         diesel::sql_query(
             r#"
-       SELECT * FROM Sources ORDER BY child_order;
-        "#,
+           SELECT * FROM Sources ORDER BY child_order;
+             "#,
         )
-        // .execute(&mut conn)
         .load::<Source>(&mut conn)
         .expect("Failed to get Sources")
     }
+    pub fn insert_source(&self, source: Source) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(sources::table)
+            .values(&source)
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn delete_source(&self, source: Source) -> bool {
+        let mut conn = self.get_conn();
+        diesel::delete(sources::table.filter(sources::id.eq(&source.id)))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_source(&self, source: Source) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(sources::table.filter(sources::id.eq(&source.id)))
+            .set((
+                sources::source_type.eq(&source.source_type),
+                sources::display_name.eq(&source.display_name),
+                sources::added_at.eq(&source.added_at),
+                sources::updated_at.eq(&source.updated_at),
+                sources::is_visible.eq(&source.is_visible),
+                sources::child_order.eq(&source.child_order),
+                sources::sync_server.eq(&source.sync_server),
+                sources::last_sync.eq(&source.last_sync),
+                sources::data.eq(&source.data),
+            ))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    // items
     pub fn get_items_collection(&self) -> Vec<Item> {
         let mut conn = self.get_conn();
         diesel::sql_query(
@@ -86,10 +119,10 @@ impl Database {
            SELECT * FROM items WHERE is_deleted = 0;
              "#,
         )
-        // .execute(&mut conn)
         .load::<Item>(&mut conn)
-        .expect("Failed to get Sources")
+        .expect("Failed to get Items")
     }
+    // attachments
     pub fn get_attachments_collection(&self) -> Vec<Attachment> {
         let mut conn = self.get_conn();
         diesel::sql_query(
@@ -114,7 +147,7 @@ impl Database {
         }
         return true;
     }
-
+    // projects
     pub(crate) fn get_projects_collection(&self) -> Vec<Project> {
         let mut conn = self.get_conn();
         diesel::sql_query(
@@ -125,7 +158,68 @@ impl Database {
         .load::<Project>(&mut conn)
         .expect("Failed to get Project")
     }
+    pub fn insert_project(&self, project: Project) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(projects::table)
+            .values(&project)
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn delete_project(&self, project: Project) -> bool {
+        let mut conn = self.get_conn();
+        diesel::delete(projects::table.filter(projects::id.eq(&project.id)))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn delete_project_db(&self, project: Project) -> bool {
+        let mut conn = self.get_conn();
+        let b1 = diesel::delete(projects::table.filter(projects::id.eq(&project.id)))
+            .execute(&mut conn)
+            .is_ok();
+        let b2 = diesel::delete(items::table.filter(items::project_id.eq(&project.id)))
+            .execute(&mut conn)
+            .is_ok();
+        b1 && b2
+    }
 
+    pub fn update_project(&self, project: Project) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(projects::table.filter(projects::id.eq(&project.id)))
+            .set((
+                projects::parent_id.eq(&project.parent_id),
+                projects::name.eq(&project.name),
+                projects::source_id.eq(&project.source_id),
+                projects::color.eq(&project.color),
+                projects::backend_type.eq(&project.backend_type),
+                projects::inbox_project.eq(&project.inbox_project),
+                projects::team_inbox.eq(&project.team_inbox),
+                projects::child_order.eq(&project.child_order),
+                projects::is_deleted.eq(&project.is_deleted),
+                projects::is_archived.eq(&project.is_archived),
+                projects::is_favorite.eq(&project.is_favorite),
+                projects::shared.eq(&project.shared),
+                projects::view_style.eq(&project.view_style),
+                projects::sort_order.eq(&project.sort_order),
+                projects::collapsed.eq(&project.collapsed),
+                projects::icon_style.eq(&project.icon_style),
+                projects::emoji.eq(&project.emoji),
+                projects::show_completed.eq(&project.show_completed),
+                projects::description.eq(&project.description),
+                projects::due_date.eq(&project.due_date),
+                projects::inbox_section_hidded.eq(&project.inbox_section_hidded),
+                projects::sync_id.eq(&project.sync_id),
+            ))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn archive_project(&self, project: Project) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(projects::table.filter(projects::id.eq(&project.id)))
+            .set((projects::is_archived.eq(&project.is_archived),))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    // labels
     pub(crate) fn get_labels_collection(&self) -> Vec<Label> {
         let mut conn = self.get_conn();
         diesel::sql_query(
@@ -136,7 +230,35 @@ impl Database {
         .load::<Label>(&mut conn)
         .expect("Failed to get Label")
     }
-
+    pub fn insert_label(&self, label: Label) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(labels::table)
+            .values(&label)
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn delete_label(&self, label: Label) -> bool {
+        let mut conn = self.get_conn();
+        diesel::delete(labels::table.filter(labels::id.eq(&label.id)))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_label(&self, label: Label) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(labels::table.filter(labels::id.eq(&label.id)))
+            .set((
+                labels::name.eq(&label.name),
+                labels::color.eq(&label.color),
+                labels::item_order.eq(&label.item_order),
+                labels::is_deleted.eq(&label.is_deleted),
+                labels::is_favorite.eq(&label.is_favorite),
+                labels::backend_type.eq(&label.backend_type),
+                labels::source_id.eq(&label.source_id),
+            ))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    // reminders
     pub(crate) fn get_reminders_collection(&self) -> Vec<Reminder> {
         let mut conn = self.get_conn();
         diesel::sql_query(
@@ -147,7 +269,7 @@ impl Database {
         .load::<Reminder>(&mut conn)
         .expect("Failed to get Label")
     }
-
+    // sections
     pub(crate) fn get_sections_collection(&self) -> Vec<Section> {
         let mut conn = self.get_conn();
         diesel::sql_query(
