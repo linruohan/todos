@@ -63,7 +63,7 @@ pub trait BaseTrait {
     }
 
     fn id(&self) -> Option<&str>;
-    fn id_string(&self) -> String {
-        self.id().unwrap().to_string()
+    fn id_string(&self) -> &str {
+        self.id().as_deref().expect("failed get id str")
     }
 }

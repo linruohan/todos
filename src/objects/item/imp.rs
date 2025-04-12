@@ -1,16 +1,14 @@
 use crate::enums::{ItemType, SourceType};
-use crate::objects::{BaseObject, BaseTrait, DueDate};
+use crate::objects::{BaseTrait, DueDate};
 use crate::schema::items;
 use crate::utils::{self, EMPTY_DATETIME};
-use crate::{Attachment, Database, Label, Project, Reminder, Section, Store, Util, constants};
+use crate::{constants, Attachment, Label, Project, Reminder, Section, Store, Util};
 use chrono::{Local, NaiveDateTime};
 use derive_builder::Builder;
-use diesel::QueryDsl;
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::ops::Deref;
 #[derive(
     QueryableByName,
     Builder,
@@ -66,7 +64,20 @@ pub struct Item {
     #[builder(default=Some(ItemType::TASK.to_string()), setter(strip_option))]
     pub item_type: Option<String>,
 }
+
 impl Item {
+    pub(crate) fn has_labels(&self) -> bool {
+        self.labels().len() > 0
+    }
+    pub fn has_label(&self, id: &str) -> bool {
+        self.get_label(id).is_some()
+    }
+}
+
+impl Item {
+    pub fn checked(&self) -> bool {
+        self.checked.unwrap_or(0) > 0
+    }
     pub fn due(&self) -> DueDate {
         match &self.due {
             Some(due) => serde_json::from_str::<DueDate>(&due).expect("failed to convert due date"),
@@ -81,21 +92,17 @@ impl Item {
             None => Vec::<Label>::new(),
         }
     }
-    pub fn get_label(&self, id: String) -> Option<Label> {
-        for label in self.labels() {
-            if label.id.clone().unwrap() == id {
-                return Some(label);
-            }
-        }
-        return None;
+    pub fn get_label(&self, id: &str) -> Option<Label> {
+        self.labels()
+            .iter()
+            .find(|l| l.id.as_deref() == Some(id))
+            .cloned()
     }
-    pub fn get_label_by_name(&self, name: String, labels_list: Vec<Label>) -> Option<Label> {
-        for label in labels_list {
-            if label.name.clone().unwrap() == name {
-                return Some(label);
-            }
-        }
-        return None;
+    pub fn get_label_by_name(&self, name: &str, labels_list: Vec<Label>) -> Option<Label> {
+        labels_list
+            .iter()
+            .find(|s| s.name.as_deref() == Some(name))
+            .cloned()
     }
     pub fn short_content(&self) -> String {
         Util::get_default().get_short_name(self.content.clone(), 0)
@@ -133,7 +140,7 @@ impl Item {
         }
     }
     pub fn completed(&self) -> bool {
-        return self.checked == Some(1);
+        self.checked == Some(1)
     }
     pub fn has_due(&self) -> bool {
         self.due().datetime() != EMPTY_DATETIME
@@ -142,46 +149,70 @@ impl Item {
         if self.due().datetime() == EMPTY_DATETIME {
             return false;
         }
-        return utils::DateTime::default().has_time(self.due().datetime());
+        utils::DateTime::default().has_time(self.due().datetime())
     }
     pub fn completed_date(&self) -> NaiveDateTime {
-        match self.completed_at.clone() {
-            Some(completed_at) => utils::DateTime::default().get_date_from_string(completed_at),
-            None => EMPTY_DATETIME,
-        }
+        self.completed_at
+            .as_deref()
+            .and_then(|s| {
+                utils::DateTime::default()
+                    .get_date_from_string(s.to_string())
+                    .into()
+            })
+            .unwrap_or_else(|| EMPTY_DATETIME)
     }
     pub fn has_parent(&self) -> bool {
-        Store::instance().get_item(self.parent_id.clone().unwrap()) == None
+        self.parent_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_item(id))
+            .is_some()
     }
     pub fn has_section(&self) -> bool {
-        Store::instance().get_section(self.section_id.clone().unwrap()) == None
+        self.section_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_item(id))
+            .is_some()
     }
     pub fn added_datetime(&self) -> NaiveDateTime {
-        match self.added_at.clone() {
-            Some(added_at) => utils::DateTime::default().get_date_from_string(added_at),
-            None => EMPTY_DATETIME,
-        }
+        self.added_at
+            .as_deref()
+            .and_then(|s| {
+                utils::DateTime::default()
+                    .get_date_from_string(s.to_string())
+                    .into()
+            })
+            .unwrap_or_else(|| EMPTY_DATETIME)
     }
     pub fn updated_datetime(&self) -> NaiveDateTime {
-        match self.updated_at.clone() {
-            Some(updated_at) => utils::DateTime::default().get_date_from_string(updated_at),
-            None => EMPTY_DATETIME,
-        }
+        self.updated_at
+            .as_deref()
+            .and_then(|s| {
+                utils::DateTime::default()
+                    .get_date_from_string(s.to_string())
+                    .into()
+            })
+            .unwrap_or_else(|| EMPTY_DATETIME)
     }
     pub fn parent(&self) -> Option<Item> {
-        Store::instance().get_item(self.parent_id.clone().unwrap())
+        self.parent_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_item(id))
     }
     pub fn project(&self) -> Option<Project> {
-        Store::instance().get_project(self.project_id.clone().unwrap())
+        self.project_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_project(id))
     }
     pub fn section(&self) -> Option<Section> {
-        Store::instance().get_section(self.section_id.clone().unwrap())
+        self.section_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_section(id))
     }
+    // subitems
     pub fn items(&self) -> Vec<Item> {
-        // subitems
-        let mut items = Store::instance().get_subitems(self.clone());
+        let mut items = Store::instance().get_subitems(self.id_string());
         items.sort_by(|a, b| a.child_order.cmp(&b.child_order));
-        return items;
+        items
     }
     pub fn items_uncomplete(&self) -> Vec<Item> {
         Store::instance().get_subitems_uncomplete(self.clone())
@@ -196,31 +227,33 @@ impl Item {
     pub fn get_caldav_categories(&self) {}
     pub fn check_labels(&self, new_labels: HashMap<String, Label>) {
         for (key, label) in &new_labels {
-            if self.get_label(label.id.clone().unwrap()) == None {
+            let label_id = label.id_string();
+            if self.get_label(label_id) == None {
                 self.add_label_if_not_exist(label.clone());
             }
         }
         for label in self.labels() {
-            if !new_labels.contains_key(&label.id.clone().unwrap()) {
-                self.delete_item_label(label.id.clone().unwrap());
+            let label_id = label.id_string();
+            if !new_labels.contains_key(label_id) {
+                self.delete_item_label(label_id);
             }
         }
     }
     pub fn set_section(&mut self, section: Section) {
-        self.section_id = Some(section.id.clone().unwrap());
+        self.section_id = section.id;
     }
     pub fn set_project(&mut self, project: Project) {
-        self.project_id = Some(project.id.clone().unwrap());
+        self.project_id = project.id;
     }
     pub fn set_parent(&mut self, parent: Item) {
-        self.parent_id = Some(parent.id.clone().unwrap());
+        self.parent_id = parent.id;
     }
 
     fn add_label_if_not_exist(&self, label: Label) {
         todo!()
     }
 
-    pub fn delete_item_label(&self, unwrap: String) {
+    pub fn delete_item_label(&self, id: &str) {
         todo!()
     }
     pub fn update_local(&self) {
@@ -235,6 +268,12 @@ impl Item {
                 _ => {}
             }
         }
+    }
+    pub fn was_archived(&self) -> bool {
+        self.parent()
+            .map(|p| p.was_archived())
+            .or_else(|| self.section().map(|s| s.was_archived()))
+            .unwrap_or_else(|| self.project().map_or(false, |p| p.is_archived()))
     }
 }
 

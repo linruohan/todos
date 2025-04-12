@@ -1,13 +1,11 @@
+use crate::enums::SourceType;
+use crate::schema::projects;
 use crate::BaseTrait;
 use crate::Source;
 use crate::Store;
-use crate::enums::SourceType;
-use crate::schema::projects;
-use diesel::QueryDsl;
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 #[derive(
     QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
 )]
@@ -39,7 +37,15 @@ pub struct Project {
     pub sync_id: Option<String>,
 }
 
+impl Project {}
+
 impl Project {
+    pub(crate) fn is_inbox_project(&self) -> bool {
+        todo!()
+    }
+    pub(crate) fn is_archived(&self) -> bool {
+        self.is_archived.unwrap_or(0) > 0
+    }
     pub fn source(&self) -> Source {
         Store::instance()
             .get_source(self.source_id.clone().unwrap())

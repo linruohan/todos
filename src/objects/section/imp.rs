@@ -1,15 +1,9 @@
-use crate::enums::ItemType;
-use crate::objects::{BaseObject, BaseTrait, DueDate};
+use crate::objects::BaseTrait;
 use crate::schema::sections;
-use crate::utils::{self, EMPTY_DATETIME};
-use crate::{Attachment, Database, Label, Project, Store, Util, constants};
-use chrono::{Local, NaiveDateTime};
 use derive_builder::Builder;
-use diesel::QueryDsl;
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 #[derive(
     QueryableByName,
     Builder,
@@ -37,6 +31,20 @@ pub struct Section {
     pub color: Option<String>,
     pub description: Option<String>,
     pub hidded: Option<i32>,
+}
+
+impl Section {
+    pub fn is_archived(&self) -> bool {
+        self.is_archived.unwrap_or(0) > 0
+    }
+    pub(crate) fn update_count(&self) {
+        todo!()
+    }
+    pub fn was_archived(&self) -> bool {
+        self.project()
+            .map(|s| s.was_archived())
+            .or_else(|| self.is_archived())
+    }
 }
 
 impl Section {}
