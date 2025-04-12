@@ -109,6 +109,11 @@ impl Store {
         }
         return results;
     }
+    pub fn update_project(&self, project: Project) {
+        if Database::default().update_project(project.clone()) {
+            project.updated();
+        }
+    }
     pub fn delete_project(&self, project: Project) {
         if Database::default().delete_project(project) {
             for section in self.get_sections_by_project(project.id_string()) {
@@ -126,9 +131,10 @@ impl Store {
     pub fn archive_project(&self, project: Project) {
         if Database::default().archive_project(project.clone()) {
             for item in self.get_items_by_project(project.id_string()) {
-                self.archive_item(item);
+                self.archive_item(item, project.is_archived());
             }
             for section in self.get_sections_by_project(project.id_string()) {
+                section.is_archived = Some(project.is_archived() as i32);
                 self.archive_section(section);
             }
         }
@@ -141,6 +147,15 @@ impl Store {
             }
         }
         return subprojects;
+    }
+    pub fn get_inbox_project(&self) -> Vec<Project> {
+        let mut results = Vec::new();
+        for pro in self.projects() {
+            if pro.is_inbox_project() {
+                results.push(pro);
+            }
+        }
+        return results;
     }
     // sections
     pub fn sections(&self) -> Vec<Section> {
