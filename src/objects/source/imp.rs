@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{enums::SourceType, objects::BaseTrait, schema::sources};
 
-#[derive(QueryableByName, Queryable, Insertable, Selectable, Serialize, Deserialize, Debug)]
+#[derive(
+    QueryableByName, Queryable, Insertable, Clone, Selectable, Serialize, Deserialize, Debug,
+)]
 #[diesel(table_name = sources)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Source {

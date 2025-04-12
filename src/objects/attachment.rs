@@ -12,7 +12,9 @@ use diesel::Queryable;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
-#[derive(QueryableByName, Queryable, PartialEq, Clone, Eq, Selectable, Serialize, Debug)]
+#[derive(
+    QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
+)]
 #[diesel(table_name = attachments)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Attachment {

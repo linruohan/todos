@@ -8,7 +8,9 @@ use diesel::Queryable;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
-#[derive(QueryableByName, Queryable, PartialEq, Clone, Eq, Selectable, Serialize, Debug)]
+#[derive(
+    QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
+)]
 #[diesel(table_name = projects)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Project {
@@ -45,6 +47,16 @@ impl Project {
     }
     pub fn source_type(&self) -> SourceType {
         self.source().source_type()
+    }
+    pub fn parent(&self) -> Option<Project> {
+        if let Some(parent_id) = &self.parent_id {
+            Store::instance().get_project(parent_id.clone())
+        } else {
+            None
+        }
+    }
+    pub fn add_subproject(&self, subproject: Project) {
+        Store::instance().insert_project(subproject.clone());
     }
 }
 impl BaseTrait for Project {

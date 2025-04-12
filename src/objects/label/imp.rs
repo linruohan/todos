@@ -17,6 +17,7 @@ use std::ops::Deref;
     Default,
     Queryable,
     PartialEq,
+    Insertable,
     Eq,
     Selectable,
     Deserialize,

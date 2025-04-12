@@ -2,11 +2,11 @@ pub mod base;
 pub mod base_object;
 pub mod filters;
 
-pub mod database;
-pub mod schema;
-
 pub mod attachment;
 pub mod color;
+pub mod database;
+pub mod queue;
+pub mod schema;
 
 pub mod due_date;
 pub mod item;
@@ -25,6 +25,7 @@ pub(crate) use filters::FilterItem;
 pub(crate) use item::Item;
 pub(crate) use label::Label;
 pub(crate) use project::Project;
+pub(crate) use queue::Queue;
 pub(crate) use reminder::Reminder;
 pub(crate) use section::Section;
 pub(crate) use source::Source;

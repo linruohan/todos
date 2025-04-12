@@ -12,7 +12,16 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ops::Deref;
 #[derive(
-    QueryableByName, Builder, Clone, Queryable, PartialEq, Eq, Selectable, Serialize, Debug,
+    QueryableByName,
+    Builder,
+    Insertable,
+    Clone,
+    Queryable,
+    PartialEq,
+    Eq,
+    Selectable,
+    Serialize,
+    Debug,
 )]
 #[diesel(table_name = items)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
@@ -211,7 +220,7 @@ impl Item {
         todo!()
     }
 
-    pub fn delete_item_label(&self, unwrap: String) -> _ {
+    pub fn delete_item_label(&self, unwrap: String) {
         todo!()
     }
     pub fn update_local(&self) {

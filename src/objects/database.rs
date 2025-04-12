@@ -1,5 +1,5 @@
 use crate::Source;
-use crate::schema::{attachments, labels, projects, reminders, sections, sources};
+use crate::schema::{attachments, items, labels, projects, queue, reminders, sections, sources};
 use diesel::QueryDsl;
 use diesel::SqliteConnection;
 use diesel::prelude::*;
@@ -8,15 +8,15 @@ use diesel::sql_query;
 use dotenvy::dotenv;
 use once_cell::sync::OnceCell;
 use std::env;
+use std::fmt::format;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Once;
 use std::vec;
 
-use super::Section;
-use super::schema::items;
-use super::{Attachment, Item, Label, Project, Reminder};
+use super::{Attachment, BaseTrait, Item, Label, Project, Reminder, label};
+use super::{Queue, Section};
 pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
 // 定义全局的数据库连接池
 pub static DB_POOL: OnceCell<DbPool> = OnceCell::new();
@@ -122,6 +122,106 @@ impl Database {
         .load::<Item>(&mut conn)
         .expect("Failed to get Items")
     }
+    pub fn insert_item(&self, item: Item) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(items::table)
+            .values(&item)
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn get_item_by_id(&self, id: String) -> Item {
+        let mut conn = self.get_conn();
+        items::table
+            .filter(items::id.eq(id))
+            .first::<Item>(&mut conn)
+            .expect("failed get item with id {id}")
+    }
+    pub fn delete_item(&self, item: Item) -> bool {
+        let mut conn = self.get_conn();
+        diesel::delete(items::table.filter(items::id.eq(&item.id)))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_item(&self, item: Item) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::id.eq(&item.id)))
+            .set((
+                items::content.eq(item.content),
+                items::description.eq(item.description),
+                items::due.eq(item.due),
+                items::added_at.eq(item.added_at),
+                items::completed_at.eq(item.completed_at),
+                items::updated_at.eq(item.updated_at),
+                items::section_id.eq(item.section_id),
+                items::project_id.eq(item.project_id),
+                items::parent_id.eq(item.parent_id),
+                items::priority.eq(item.priority),
+                items::child_order.eq(item.child_order),
+                items::checked.eq(item.checked),
+                items::is_deleted.eq(item.is_deleted),
+                items::day_order.eq(item.day_order),
+                items::collapsed.eq(item.collapsed),
+                items::pinned.eq(item.pinned),
+                items::labels.eq(item.labels),
+                items::extra_data.eq(item.extra_data),
+                items::item_type.eq(item.item_type),
+            ))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn move_item(&self, item: Item) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::id.eq(&item.id)))
+            .set((
+                items::section_id.eq(item.section_id),
+                items::project_id.eq(item.project_id),
+                items::parent_id.eq(item.parent_id),
+            ))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn complete_item(&self, item: Item) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(
+            items::table.filter(items::id.eq(&item.id).or(items::parent_id.eq(&item.id))),
+        )
+        .set((
+            items::completed_at.eq(item.completed_at),
+            items::checked.eq(item.checked),
+        ))
+        .execute(&mut conn)
+        .is_ok()
+    }
+    pub fn update_project_item_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::project_id.eq(&cur_id)))
+            .set(items::project_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_section_item_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::section_id.eq(&cur_id)))
+            .set(items::section_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
+
+    pub fn update_item_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::id.eq(&cur_id)))
+            .set(items::id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
+
+    pub fn update_item_child_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::parent_id.eq(&cur_id)))
+            .set(items::parent_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
     // attachments
     pub fn get_attachments_collection(&self) -> Vec<Attachment> {
         let mut conn = self.get_conn();
@@ -133,6 +233,13 @@ impl Database {
         // .execute(&mut conn)
         .load::<Attachment>(&mut conn)
         .expect("Failed to get Sources")
+    }
+    pub fn insert_attachment(&self, attachment: Attachment) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(attachments::table)
+            .values(&attachment)
+            .execute(&mut conn)
+            .is_ok()
     }
     pub fn delete_attachment(&self, attachment: Attachment) -> bool {
         let mut conn = self.get_conn();
@@ -219,6 +326,14 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
+    pub fn update_project_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(projects::table.filter(projects::id.eq(&cur_id)))
+            .set(projects::id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
+
     // labels
     pub(crate) fn get_labels_collection(&self) -> Vec<Label> {
         let mut conn = self.get_conn();
@@ -229,6 +344,13 @@ impl Database {
         )
         .load::<Label>(&mut conn)
         .expect("Failed to get Label")
+    }
+    pub fn get_labels_ids(&self, labels: Vec<Label>) -> String {
+        labels
+            .iter()
+            .map(|label| label.id_string())
+            .collect::<Vec<_>>()
+            .join(";")
     }
     pub fn insert_label(&self, label: Label) -> bool {
         let mut conn = self.get_conn();
@@ -269,6 +391,30 @@ impl Database {
         .load::<Reminder>(&mut conn)
         .expect("Failed to get Label")
     }
+    pub fn insert_reminder(&self, reminder: Reminder) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(reminders::table)
+            .values(&reminder)
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn get_reminders_by_item_id(&self, id: String) -> Vec<Reminder> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+            SELECT id, item_id, type, due, mm_offset FROM Reminders WHERE item_id=$item_id;
+            "#,
+        )
+        .bind::<diesel::sql_types::Text, _>(id)
+        .load::<Reminder>(&mut conn)
+        .expect("Failed to get reminders")
+    }
+    pub fn delete_reminder(&self, reminder: Reminder) -> bool {
+        let mut conn = self.get_conn();
+        diesel::delete(reminders::table.filter(reminders::item_id.eq(&reminder.id)))
+            .execute(&mut conn)
+            .is_ok()
+    }
     // sections
     pub(crate) fn get_sections_collection(&self) -> Vec<Section> {
         let mut conn = self.get_conn();
@@ -279,5 +425,90 @@ impl Database {
         )
         .load::<Section>(&mut conn)
         .expect("Failed to get Section")
+    }
+    pub fn insert_section(&self, section: Section) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(sections::table)
+            .values(&section)
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn delete_section(&self, section: Section) -> bool {
+        let mut conn = self.get_conn();
+        diesel::delete(sections::table.filter(sections::id.eq(&section.id)))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_section(&self, section: Section) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(sections::table.filter(sections::id.eq(&section.id)))
+            .set((
+                sections::name.eq(&section.name),
+                sections::archived_at.eq(&section.archived_at),
+                sections::added_at.eq(&section.added_at),
+                sections::project_id.eq(&section.project_id),
+                sections::section_order.eq(&section.section_order),
+                sections::collapsed.eq(&section.collapsed),
+                sections::is_deleted.eq(&section.is_deleted),
+                sections::is_archived.eq(&section.is_archived),
+                sections::color.eq(&section.color),
+                sections::description.eq(&section.description),
+                sections::hidded.eq(&section.hidded),
+            ))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn move_section(&self, section: Section, project_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(sections::table.filter(sections::id.eq(&section.id)))
+            .set((sections::project_id.eq(project_id),))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn move_section_items(&self, section: Section) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::section_id.eq(&section.id)))
+            .set((items::project_id.eq(section.project_id),))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn archive_section(&self, section: Section) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(sections::table.filter(sections::id.eq(&section.id)))
+            .set((sections::is_archived.eq(section.is_archived),))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_project_section_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(sections::table.filter(sections::project_id.eq(&cur_id)))
+            .set(sections::project_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    pub fn update_section_id(&self, cur_id: String, new_id: String) -> bool {
+        let mut conn = self.get_conn();
+        diesel::update(sections::table.filter(sections::id.eq(&cur_id)))
+            .set(sections::id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
+    }
+    // queue
+    pub(crate) fn get_all_queue(&self) -> Vec<Queue> {
+        let mut conn = self.get_conn();
+        diesel::sql_query(
+            r#"
+          SELECT * FROM Queue ORDER BY date_added;
+             "#,
+        )
+        .load::<Queue>(&mut conn)
+        .expect("Failed to get Queue")
+    }
+    pub fn insert_queue(&self, new_queue: Queue) -> bool {
+        let mut conn = self.get_conn();
+        diesel::insert_into(queue::table)
+            .values(&new_queue)
+            .execute(&mut conn)
+            .is_ok()
     }
 }
