@@ -2,7 +2,7 @@ use crate::BaseTrait;
 use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
 pub struct Store {}
 use crate::utils::DateTime;
-use chrono::Local;
+use chrono::{Datelike, Local, NaiveDateTime};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
 
@@ -159,6 +159,8 @@ impl Store {
             }
         }
     }
+
+
     pub fn get_subprojects(&self, id: &str) -> Vec<Project> {
         self.projects()
             .iter()
@@ -374,6 +376,39 @@ impl Store {
             })
             .collect()
     }
+
+    pub fn get_items_unlabeled(&self, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|s| s.labels().len() <= 0 && s.checked() == checked && !s.was_archived()).collect()
+    }
+    pub fn get_items_no_parent(&self, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|i| !i.was_archived() &&
+            i.checked() == checked &&
+            !i.has_parent()).cloned().collect()
+    }
+    pub fn valid_item_by_date(&self, item: Item, date: NaiveDateTime, checked: bool) -> bool {
+        if item.has_due() || item.was_archived() {
+            return false;
+        }
+        item.checked() == checked && DateTime::default().is_same_day(i.due().datetime(), date)
+    }
+
+    pub fn valid_item_by_date_range(&self, item: Item, start_date: NaiveDateTime, end_date: NaiveDateTime, checked: bool) -> bool {
+        if item.has_due() || item.was_archived() {
+            return false;
+        }
+        let date = DateTime::default().get_date_only(item.due().datetime());
+        let start = DateTime::default().get_date_only(start_date);
+        let end = DateTime::default().get_date_only(end_date);
+        item.checked() == checked && date >= start && date <= end
+    }
+    pub fn valid_item_by_month(&self, item: Item, date: NaiveDateTime, checked: bool) -> bool {
+        if item.has_due() || item.was_archived() {
+            return false;
+        }
+
+        item.checked() == checked && item.due().datetime().month() == date.month() && item.due().datetime().year() == date.year()
+    }
+
     pub fn get_items_by_overdeue_view(&self, checked: bool) -> Vec<Item> {
         let date_now = Local::now().naive_local();
         self.items()
