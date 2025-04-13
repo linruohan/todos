@@ -66,6 +66,15 @@ pub struct Item {
 }
 
 impl Item {
+    pub(crate) fn archived(&self) {
+        todo!()
+    }
+    pub(crate) fn unarchived(&self) {
+        todo!()
+    }
+}
+
+impl Item {
     pub(crate) fn has_labels(&self) -> bool {
         self.labels().len() > 0
     }

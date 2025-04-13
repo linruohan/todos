@@ -1,21 +1,17 @@
-use crate::Source;
 use crate::schema::{attachments, items, labels, projects, queue, reminders, sections, sources};
-use diesel::QueryDsl;
-use diesel::SqliteConnection;
+use crate::Source;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
-use diesel::sql_query;
+use diesel::QueryDsl;
+use diesel::SqliteConnection;
 use dotenvy::dotenv;
 use once_cell::sync::OnceCell;
 use std::env;
-use std::fmt::format;
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
-use std::sync::Once;
-use std::vec;
 
-use super::{Attachment, BaseTrait, Item, Label, Project, Reminder, label};
+use super::{Attachment, BaseTrait, Item, Label, Project, Reminder};
 use super::{Queue, Section};
 pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
 // 定义全局的数据库连接池
@@ -169,13 +165,13 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn move_item(&self, item: Item) -> bool {
+    pub fn move_item(&self, item: &Item) -> bool {
         let mut conn = self.get_conn();
         diesel::update(items::table.filter(items::id.eq(&item.id)))
             .set((
-                items::section_id.eq(item.section_id),
-                items::project_id.eq(item.project_id),
-                items::parent_id.eq(item.parent_id),
+                items::section_id.eq(&item.section_id),
+                items::project_id.eq(&item.project_id),
+                items::parent_id.eq(&item.parent_id),
             ))
             .execute(&mut conn)
             .is_ok()

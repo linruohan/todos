@@ -254,20 +254,20 @@ impl Store {
             item.pin_updated();
         }
     }
-    pub fn move_item(&self, item: Item, project_id: &str, section_id: &str) {
-        if Database::default().move_item(item) {
-            for subitem in self.get_subitems(&item) {
+    pub fn move_item(&self, item: &Item, project_id: &str, section_id: &str) {
+        if Database::default().move_item(&item) {
+            for subitem in self.get_subitems(item.id_string()) {
                 let mut sub = subitem.clone();
                 sub.project_id = item.project_id.clone();
-                self.move_item(sub, "", "");
+                self.move_item(&sub, "", "");
             }
             if let Some(section_id) = item.section_id.clone() {
-                if let Some(section) = self.get_section(section_id) {
+                if let Some(section) = self.get_section(&section_id) {
                     section.update_count();
                 }
             }
             if let Some(project_id) = item.project_id.clone() {
-                if let Some(project) = self.get_project(project_id) {
+                if let Some(project) = self.get_project(&project_id) {
                     project.update_count();
                 }
             }
@@ -276,7 +276,7 @@ impl Store {
 
     pub fn delete_item(&self, item: Item) {
         if Database::default().delete_item(item.clone()) {
-            for subitem in self.get_subitems(item.clone()) {
+            for subitem in self.get_subitems(item.id_string()) {
                 self.delete_item(subitem);
             }
             item.project().item_deleted(item.clone());
@@ -346,7 +346,9 @@ impl Store {
             .filter(|i| i.has_label(&label_id) && i.checked() == checked && !i.was_archived())
             .collect()
     }
-
+    pub fn get_items_by_month(&self, date: &NaiveDateTime, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|s| self.valid_item_by_month(s, date, checked)).cloned().collect()
+    }
     pub fn get_items_pinned(&self, checked: bool) -> Vec<Item> {
         self.items()
             .iter()
@@ -401,7 +403,7 @@ impl Store {
         let end = DateTime::default().get_date_only(end_date);
         item.checked() == checked && date >= start && date <= end
     }
-    pub fn valid_item_by_month(&self, item: Item, date: NaiveDateTime, checked: bool) -> bool {
+    pub fn valid_item_by_month(&self, item: &Item, date: &NaiveDateTime, checked: bool) -> bool {
         if item.has_due() || item.was_archived() {
             return false;
         }
