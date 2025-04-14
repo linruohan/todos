@@ -3,15 +3,11 @@ use uuid::Uuid;
 use crate::Store;
 
 use super::Item;
-use crate::objects::{BaseTrait, DueDate};
+use crate::objects::BaseTrait;
 use crate::schema::attachments;
-use crate::utils::EMPTY_DATETIME;
-use crate::{Database, Project};
-use diesel::QueryDsl;
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 #[derive(
     QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
 )]
@@ -46,9 +42,7 @@ impl Attachment {
         Store::instance().delete_attachment(self.clone());
     }
     pub fn item(&self) -> Item {
-        Store::instance()
-            .get_item(self.item_id.clone().unwrap())
-            .unwrap()
+        Store::instance().get_item(self.item_id()).unwrap()
     }
     pub fn set_item(&mut self, new_item_id: String) {
         self.item_id = Some(new_item_id);

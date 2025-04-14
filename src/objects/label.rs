@@ -1,16 +1,13 @@
-use crate::Util;
 use crate::enums::SourceType;
-use crate::objects::{BaseObject, BaseTrait, DueDate};
+use crate::objects::{BaseObjectTrait, BaseTrait};
 use crate::schema::labels;
-use crate::utils::EMPTY_DATETIME;
-use crate::{Attachment, Database, Project, Source, Store};
+use crate::Store;
+use crate::Util;
 use derive_builder::Builder;
-use diesel::QueryDsl;
 
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 #[derive(
     QueryableByName,
     Builder,
@@ -65,9 +62,7 @@ impl Label {
         }
     }
     fn update_label_count(&self) -> usize {
-        Store::instance()
-            .get_items_by_label(self.clone(), false)
-            .len()
+        Store::instance().get_items_by_label(self.id(), false).len()
     }
     pub fn source_id(&self) -> String {
         self.source_id
@@ -87,22 +82,12 @@ impl Label {
         Util::get_default().get_short_name(self.name.clone().unwrap_or_default(), 0)
     }
     pub fn delete_label(&self) {
-        let items = Store::instance().get_items_by_label(self.clone(), false);
+        let items = Store::instance().get_items_by_label(self.id(), false);
         for item in items {
-            item.delete_item_label(self.id.clone().unwrap_or_default());
+            item.delete_item_label(self.id());
         }
         Store::instance().delete_label(self.clone());
     }
 }
 
-impl BaseTrait for Label {
-    fn source(&self) -> Source {
-        Store::instance()
-            .get_source(self.source_id())
-            .unwrap_or(Source::default())
-    }
-
-    fn id(&self) -> Option<&str> {
-        self.id.as_deref()
-    }
-}
+impl BaseObjectTrait for Label {}

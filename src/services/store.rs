@@ -109,8 +109,8 @@ impl Store {
     pub fn projects(&self) -> Vec<Project> {
         Database::default().get_projects_collection()
     }
-    pub fn insert_project(&self, project: Project) {
-        if Database::default().insert_project(project.clone()) {
+    pub fn insert_project(&self, project: &Project) {
+        if Database::default().insert_project(&project) {
             if let Some(parent) = project.parent() {
                 parent.add_subproject(project.clone());
             }

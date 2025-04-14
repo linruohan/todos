@@ -261,7 +261,7 @@ impl Database {
         .load::<Project>(&mut conn)
         .expect("Failed to get Project")
     }
-    pub fn insert_project(&self, project: Project) -> bool {
+    pub fn insert_project(&self, project: &Project) -> bool {
         let mut conn = self.get_conn();
         diesel::insert_into(projects::table)
             .values(&project)

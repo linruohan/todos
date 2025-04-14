@@ -1,13 +1,7 @@
-use super::Item;
-use crate::objects::{BaseTrait, DueDate};
 use crate::schema::queue;
-use crate::utils::EMPTY_DATETIME;
-use crate::{Database, Project};
-use diesel::QueryDsl;
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 #[derive(
     QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
 )]

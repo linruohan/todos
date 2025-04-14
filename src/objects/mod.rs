@@ -1,4 +1,3 @@
-pub mod base;
 pub mod base_object;
 pub mod filters;
 
@@ -15,11 +14,9 @@ pub mod project;
 pub mod reminder;
 pub mod section;
 pub mod source;
-mod baseObject;
 
 pub(crate) use attachment::Attachment;
-pub(crate) use base::BaseTrait;
-pub(crate) use base_object::BaseObject;
+pub(crate) use base_object::{BaseObject, BaseObjectTrait};
 pub(crate) use color::Color;
 pub(crate) use database::Database;
 pub(crate) use due_date::DueDate;

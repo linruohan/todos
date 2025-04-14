@@ -1,4 +1,4 @@
-use crate::objects::BaseTrait;
+use crate::objects::{BaseObjectTrait, Project};
 use crate::schema::sections;
 use derive_builder::Builder;
 use diesel::prelude::*;
@@ -47,4 +47,4 @@ impl Section {
     }
 }
 
-impl Section {}
+impl BaseObjectTrait for Project {}

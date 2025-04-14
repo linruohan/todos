@@ -1,7 +1,8 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::{enums::SourceType, objects::BaseTrait, schema::sources};
+use crate::objects::{BaseObjectTrait, Project};
+use crate::{enums::SourceType, schema::sources};
 
 #[derive(
     QueryableByName, Queryable, Insertable, Clone, Selectable, Serialize, Deserialize, Debug,
@@ -40,11 +41,5 @@ impl Source {
         SourceType::parse(Some(&self.source_type))
     }
 }
-impl BaseTrait for Source {
-    fn source(&self) -> Source {
-        todo!()
-    }
-    fn id(&self) -> Option<&str> {
-        self.id.as_deref()
-    }
-}
+
+impl BaseObjectTrait for Project {}

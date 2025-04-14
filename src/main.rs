@@ -6,7 +6,7 @@ pub mod objects;
 pub mod services;
 pub mod utils;
 use chrono::Datelike;
-pub(crate) use objects::{schema, BaseObject, BaseTrait, Database};
+pub(crate) use objects::{schema, BaseObject, BaseObjectTrait, Database};
 pub(crate) use objects::{Attachment, Item, Label, Project, Reminder, Section, Source};
 pub(crate) use services::{load_config, Store};
 pub(crate) use utils::Util;

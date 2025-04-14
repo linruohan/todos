@@ -1,11 +1,12 @@
 use crate::enums::SourceType;
+use crate::objects::BaseObjectTrait;
 use crate::schema::projects;
-use crate::BaseTrait;
-use crate::Source;
 use crate::Store;
 use diesel::prelude::*;
+use diesel::row::NamedRow;
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
+
 #[derive(
     QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
 )]
@@ -37,8 +38,6 @@ pub struct Project {
     pub sync_id: Option<String>,
 }
 
-impl Project {}
-
 impl Project {
     pub(crate) fn is_inbox_project(&self) -> bool {
         todo!()
@@ -46,30 +45,17 @@ impl Project {
     pub(crate) fn is_archived(&self) -> bool {
         self.is_archived.unwrap_or(0) > 0
     }
-    pub fn source(&self) -> Source {
-        Store::instance()
-            .get_source(self.source_id.clone().unwrap())
-            .unwrap_or(Source::default())
-    }
     pub fn source_type(&self) -> SourceType {
         self.source().source_type()
     }
-    pub fn parent(&self) -> Option<Project> {
-        if let Some(parent_id) = &self.parent_id {
-            Store::instance().get_project(parent_id.clone())
-        } else {
-            None
-        }
+    pub fn parent(&self) -> Project {
+        self.parent_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_project(id))
+            .unwrap_or_else(|_| None.into())
     }
-    pub fn add_subproject(&self, subproject: Project) {
-        Store::instance().insert_project(subproject.clone());
-    }
-}
-impl BaseTrait for Project {
-    fn source(&self) -> Source {
-        self.source()
-    }
-    fn id(&self) -> Option<&str> {
-        self.id.as_deref()
+    pub fn add_subproject(&self, subproject: &Project) {
+        Store::instance().insert_project(&subproject);
     }
 }
+impl BaseObjectTrait for Project {}

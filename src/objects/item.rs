@@ -1,5 +1,5 @@
 use crate::enums::{ItemType, SourceType};
-use crate::objects::{BaseTrait, DueDate};
+use crate::objects::{BaseObjectTrait, DueDate};
 use crate::schema::items;
 use crate::utils::{self, EMPTY_DATETIME};
 use crate::{constants, Attachment, Label, Project, Reminder, Section, Store, Util};
@@ -63,15 +63,6 @@ pub struct Item {
     pub extra_data: Option<String>,
     #[builder(default=Some(ItemType::TASK.to_string()), setter(strip_option))]
     pub item_type: Option<String>,
-}
-
-impl Item {
-    pub(crate) fn archived(&self) {
-        todo!()
-    }
-    pub(crate) fn unarchived(&self) {
-        todo!()
-    }
 }
 
 impl Item {
@@ -228,7 +219,7 @@ impl Item {
     }
     // subitems
     pub fn items(&self) -> Vec<Item> {
-        let mut items = Store::instance().get_subitems(self.id_string());
+        let mut items = Store::instance().get_subitems(self);
         items.sort_by(|a, b| a.child_order.cmp(&b.child_order));
         items
     }
@@ -245,13 +236,13 @@ impl Item {
     pub fn get_caldav_categories(&self) {}
     pub fn check_labels(&self, new_labels: HashMap<String, Label>) {
         for (key, label) in &new_labels {
-            let label_id = label.id_string();
+            let label_id = label.id();
             if self.get_label(label_id) == None {
                 self.add_label_if_not_exist(label.clone());
             }
         }
         for label in self.labels() {
-            let label_id = label.id_string();
+            let label_id = label.id();
             if !new_labels.contains_key(label_id) {
                 self.delete_item_label(label_id);
             }
@@ -295,12 +286,4 @@ impl Item {
     }
 }
 
-impl BaseTrait for Item {
-    fn source(&self) -> crate::Source {
-        todo!()
-    }
-
-    fn id(&self) -> Option<&str> {
-        self.id.as_deref()
-    }
-}
+impl BaseObjectTrait for Item {}

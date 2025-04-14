@@ -1,13 +1,9 @@
-use crate::BaseTrait;
-use crate::Source;
-use crate::Store;
-use crate::enums::SourceType;
+use crate::objects::{BaseObjectTrait, Project};
 use crate::schema::reminders;
-use diesel::QueryDsl;
-use diesel::Queryable;
 use diesel::prelude::*;
+use diesel::Queryable;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
+
 #[derive(
     QueryableByName,
     Queryable,
@@ -26,4 +22,9 @@ pub struct Reminder {
     pub id: Option<String>,
     pub item_id: Option<String>,
 }
-impl Reminder {}
+impl Reminder {
+    pub fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or("")
+    }
+}
+impl BaseObjectTrait for Project {}

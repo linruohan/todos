@@ -1,8 +1,5 @@
+use crate::enums::{RecurrencyEndType, RecurrencyType};
 use crate::utils::DateTime;
-use crate::{
-    enums::{RecurrencyEndType, RecurrencyType},
-    utils,
-};
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
