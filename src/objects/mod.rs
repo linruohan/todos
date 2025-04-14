@@ -15,6 +15,8 @@ pub mod project;
 pub mod reminder;
 pub mod section;
 pub mod source;
+mod baseObject;
+
 pub(crate) use attachment::Attachment;
 pub(crate) use base::BaseTrait;
 pub(crate) use base_object::BaseObject;

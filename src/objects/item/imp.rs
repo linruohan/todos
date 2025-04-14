@@ -87,6 +87,9 @@ impl Item {
     pub fn checked(&self) -> bool {
         self.checked.unwrap_or(0) > 0
     }
+    pub fn pinned(&self) -> bool {
+        self.pinned.unwrap_or(0) > 0
+    }
     pub fn due(&self) -> DueDate {
         match &self.due {
             Some(due) => serde_json::from_str::<DueDate>(&due).expect("failed to convert due date"),
@@ -100,6 +103,12 @@ impl Item {
             }
             None => Vec::<Label>::new(),
         }
+    }
+    pub fn exists_project(&self, project: &Project) -> bool {
+        if project.id == self.project_id {
+            return true;
+        }
+        self.parent().map_or(false, |p| p.exists_project(project))
     }
     pub fn get_label(&self, id: &str) -> Option<Label> {
         self.labels()

@@ -1,6 +1,7 @@
 use crate::BaseTrait;
 use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
 pub struct Store {}
+use crate::objects::BaseObject;
 use crate::utils::DateTime;
 use chrono::{Datelike, Local, NaiveDateTime};
 use once_cell::sync::OnceCell;
@@ -256,7 +257,7 @@ impl Store {
     }
     pub fn move_item(&self, item: &Item, project_id: &str, section_id: &str) {
         if Database::default().move_item(&item) {
-            for subitem in self.get_subitems(item.id_string()) {
+            for subitem in self.get_subitems(item) {
                 let mut sub = subitem.clone();
                 sub.project_id = item.project_id.clone();
                 self.move_item(&sub, "", "");
@@ -274,10 +275,10 @@ impl Store {
         }
     }
 
-    pub fn delete_item(&self, item: Item) {
+    pub fn delete_item(&self, item: &Item) {
         if Database::default().delete_item(item.clone()) {
-            for subitem in self.get_subitems(item.id_string()) {
-                self.delete_item(subitem);
+            for subitem in self.get_subitems(item) {
+                self.delete_item(&subitem);
             }
             item.project().item_deleted(item.clone());
             if item.has_section() {
@@ -291,7 +292,7 @@ impl Store {
         } else {
             item.unarchived();
         }
-        for subitem in self.get_subitems(item.clone()) {
+        for subitem in self.get_subitems(&item) {
             self.archive_item(subitem, archived);
         }
     }
@@ -302,12 +303,7 @@ impl Store {
             .find(|i| i.id.as_deref() == Some(id))
             .collect()
     }
-    pub fn get_items_by_project(&self, id: &str) -> Vec<Item> {
-        self.items()
-            .iter()
-            .filter(|s| s.project_id.as_deref() == Some(id))
-            .collect()
-    }
+
     pub fn get_items_by_section(&self, id: &str) -> Vec<Item> {
         self.items()
             .iter()
@@ -315,18 +311,13 @@ impl Store {
             .collect()
     }
 
-    pub fn get_subitems(&self, id: &str) -> Vec<Item> {
+    pub fn get_subitems(&self, item: &Item) -> Vec<Item> {
         self.items()
             .iter()
-            .filter(|s| s.parent_id.as_deref() == Some(id))
+            .filter(|s| s.parent_id.as_deref() == Some(item.id_string()))
             .collect()
     }
-    pub fn get_subitems_uncomplete(&self, item: Item) -> Vec<Item> {
-        self.items()
-            .iter()
-            .filter(|s| s.parent_id == item.id && item.checked != Some(1))
-            .collect()
-    }
+
     pub fn get_items_completed(&self) -> Vec<Item> {
         self.items()
             .iter()
@@ -345,6 +336,34 @@ impl Store {
             .iter()
             .filter(|i| i.has_label(&label_id) && i.checked() == checked && !i.was_archived())
             .collect()
+    }
+    pub fn get_item_by_baseobject(&self, baseobject: BaseObject) -> Vec<Item> {}
+    pub fn get_items_checked(&self) -> Vec<Item> {
+        self.items().iter().filter(|i| i.checked()).collect()
+    }
+    pub fn get_items_checked_by_project(&self, project: &Project) -> Vec<Item> {
+        self.items().iter().filter(|i| i.project_id == project.id && i.checked()).collect()
+    }
+    pub fn get_subitems_uncomplete(&self, item: Item) -> Vec<Item> {
+        self.items().iter().filter(|i| i.parent_id == i.id && !i.checked()).collect()
+    }
+    pub fn get_items_by_project(&self, project: &Project) -> Vec<Item> {
+        self.items().iter().filter(|i| i.exists_project(project)).collect()
+    }
+    pub fn get_items_by_project_pinned(&self, project: &Project) -> Vec<Item> {
+        self.items().iter().filter(|i| i.exists_project(project) && i.pinned()).collect()
+    }
+    pub fn get_items_by_date(&self, date: &NaiveDateTime, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|i| self.valid_item_by_date(i, date, checked)).collect()
+    }
+    pub fn get_items_no_date(&self, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|i| !i.has_due() && i.checked() == checked).collect()
+    }
+    pub fn get_items_repeating(&self, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|i| i.has_due() && i.due().is_recurring && i.checked() == checked && !i.was_archived()).collect()
+    }
+    pub fn get_items_by_date_range(&self, start_date: &NaiveDateTime, end_date: &NaiveDateTime, checked: bool) -> Vec<Item> {
+        self.items().iter().filter(|s| self.valid_item_by_date_range(s, start_date, end_date, checked)).collect()
     }
     pub fn get_items_by_month(&self, date: &NaiveDateTime, checked: bool) -> Vec<Item> {
         self.items().iter().filter(|s| self.valid_item_by_month(s, date, checked)).cloned().collect()
@@ -387,18 +406,18 @@ impl Store {
             i.checked() == checked &&
             !i.has_parent()).cloned().collect()
     }
-    pub fn valid_item_by_date(&self, item: Item, date: NaiveDateTime, checked: bool) -> bool {
+    pub fn valid_item_by_date(&self, item: &Item, date: &NaiveDateTime, checked: bool) -> bool {
         if item.has_due() || item.was_archived() {
             return false;
         }
-        item.checked() == checked && DateTime::default().is_same_day(i.due().datetime(), date)
+        item.checked() == checked && DateTime::default().is_same_day(&item.due().datetime(), date)
     }
 
-    pub fn valid_item_by_date_range(&self, item: Item, start_date: NaiveDateTime, end_date: NaiveDateTime, checked: bool) -> bool {
+    pub fn valid_item_by_date_range(&self, item: &Item, start_date: &NaiveDateTime, end_date: &NaiveDateTime, checked: bool) -> bool {
         if item.has_due() || item.was_archived() {
             return false;
         }
-        let date = DateTime::default().get_date_only(item.due().datetime());
+        let date = DateTime::default().get_date_only(&item.due().datetime());
         let start = DateTime::default().get_date_only(start_date);
         let end = DateTime::default().get_date_only(end_date);
         item.checked() == checked && date >= start && date <= end
@@ -420,7 +439,7 @@ impl Store {
                     && !i.was_archived()
                     && i.checked()
                     && i.due().datetime() < date_now
-                    && !DateTime::default().is_same_day(i.due().datetime(), date_now)
+                    && !DateTime::default().is_same_day(&i.due().datetime(), &date_now)
             })
             .collect()
     }
@@ -447,7 +466,7 @@ impl Store {
         }
         let date_now = Local::now().naive_local();
         item.due().datetime() <= date_now
-            && DateTime::default().is_same_day(item.due().datetime(), date_now)
+            && DateTime::default().is_same_day(&item.due().datetime(), &date_now)
     }
 
     // labels

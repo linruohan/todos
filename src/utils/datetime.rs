@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
-use crate::{Item, enums::RecurrencyType, objects::DueDate};
+use crate::{enums::RecurrencyType, objects::DueDate, Item};
 use anyhow::Result;
 use chrono::{
     Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, ParseError, Timelike,
 };
 use chrono_humanize::{Accuracy, HumanTime};
-use diesel::{dsl::date, sql_types::Json};
+use diesel::sql_types::Json;
 pub const EMPTY_DATETIME: NaiveDateTime =
     chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc();
 pub struct DateTime {}
@@ -93,11 +93,11 @@ impl DateTime {
         false
     }
 
-    pub fn is_yesterday(&self, date: NaiveDateTime) -> bool {
-        return self.is_same_day(date, Local::now().naive_local() - Duration::days(1));
+    pub fn is_yesterday(&self, date: &NaiveDateTime) -> bool {
+        return self.is_same_day(date, &(Local::now().naive_local() - Duration::days(1)));
     }
 
-    pub fn is_same_day(&self, day1: NaiveDateTime, day2: NaiveDateTime) -> bool {
+    pub fn is_same_day(&self, day1: &NaiveDateTime, day2: &NaiveDateTime) -> bool {
         return day1.year() == day2.year() && day1.day() == day2.day();
     }
 
@@ -403,14 +403,14 @@ impl DateTime {
     }
 
     pub fn get_today_format_date(&self) -> NaiveDateTime {
-        return self.get_date_only(Local::now().naive_local());
+        return self.get_date_only(&Local::now().naive_local());
     }
 
-    pub fn get_date_only(&self, date: NaiveDateTime) -> NaiveDateTime {
+    pub fn get_date_only(&self, date: &NaiveDateTime) -> NaiveDateTime {
         NaiveDateTime::new(date.date(), NaiveTime::from_hms_opt(0, 0, 0).unwrap())
     }
 
-    pub fn get_default_date_format_from_date(&self, date: NaiveDateTime) -> String {
+    pub fn get_default_date_format_from_date(&self, date: &NaiveDateTime) -> String {
         let year = if date.year() == Local::now().year() {
             ""
         } else {
