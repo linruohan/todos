@@ -1,4 +1,4 @@
-use crate::objects::{BaseObjectTrait, Project};
+use crate::objects::{BaseObjectTrait, Item};
 use crate::schema::sections;
 use derive_builder::Builder;
 use diesel::prelude::*;
@@ -34,6 +34,11 @@ pub struct Section {
 }
 
 impl Section {
+    pub fn item_added(&self, item: &Item) {
+        todo!()
+    }
+}
+impl Section {
     pub fn is_archived(&self) -> bool {
         self.is_archived.unwrap_or(0) > 0
     }
@@ -47,4 +52,4 @@ impl Section {
     }
 }
 
-impl BaseObjectTrait for Project {}
+impl BaseObjectTrait for Section {}

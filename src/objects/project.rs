@@ -1,5 +1,5 @@
 use crate::enums::SourceType;
-use crate::objects::BaseObjectTrait;
+use crate::objects::{BaseObjectTrait, Item};
 use crate::schema::projects;
 use crate::Store;
 use diesel::prelude::*;
@@ -39,6 +39,15 @@ pub struct Project {
 }
 
 impl Project {
+    pub(crate) fn item_added(&self, p0: &Item) {
+        todo!()
+    }
+    pub(crate) fn item_deleted(&self, p0: &Item) {
+        todo!()
+    }
+}
+
+impl Project {
     pub(crate) fn is_inbox_project(&self) -> bool {
         todo!()
     }
@@ -47,6 +56,9 @@ impl Project {
     }
     pub fn source_type(&self) -> SourceType {
         self.source().source_type()
+    }
+    pub(crate) fn update_count(&self) {
+        todo!()
     }
     pub fn parent(&self) -> Project {
         self.parent_id

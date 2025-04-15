@@ -66,15 +66,24 @@ pub struct Item {
 }
 
 impl Item {
+    pub fn item_label_added(&self, label: &Label) {}
+    pub fn item_label_deleted(&self, label: &Label) {}
+    pub fn item_added(&self, item: &Item) {}
+    pub fn reminder_added(&self, reminder: &Reminder) {}
+    pub fn reminder_deleted(&self, reminder: &Reminder) {}
+    pub fn show_item_changed(&self) {}
+    pub fn collapsed_change(&self) {}
+    pub fn attachment_added(&self, attachment: &Attachment) {}
+    pub fn attachment_deleted(&self, attachment: &Attachment) {}
+    pub fn pin_updated(&self) {}
+}
+impl Item {
     pub(crate) fn has_labels(&self) -> bool {
         self.labels().len() > 0
     }
     pub fn has_label(&self, id: &str) -> bool {
         self.get_label(id).is_some()
     }
-}
-
-impl Item {
     pub fn checked(&self) -> bool {
         self.checked.unwrap_or(0) > 0
     }
@@ -99,7 +108,7 @@ impl Item {
         if project.id == self.project_id {
             return true;
         }
-        self.parent().map_or(false, |p| p.exists_project(project))
+        self.parent().map(|p| p.exists_project(project))
     }
     pub fn get_label(&self, id: &str) -> Option<Label> {
         self.labels()
@@ -202,20 +211,20 @@ impl Item {
             })
             .unwrap_or_else(|| EMPTY_DATETIME)
     }
-    pub fn parent(&self) -> Option<Item> {
+    pub fn parent(&self) -> Item {
         self.parent_id
             .as_deref()
-            .and_then(|id| Store::instance().get_item(id))
+            .and_then(|id| Store::instance().get_item(id)).unwrap_or(None.into())
     }
-    pub fn project(&self) -> Option<Project> {
+    pub fn project(&self) -> Project {
         self.project_id
             .as_deref()
-            .and_then(|id| Store::instance().get_project(id))
+            .and_then(|id| Store::instance().get_project(id)).unwrap_or(None.into())
     }
-    pub fn section(&self) -> Option<Section> {
+    pub fn section(&self) -> Section {
         self.section_id
             .as_deref()
-            .and_then(|id| Store::instance().get_section(id))
+            .and_then(|id| Store::instance().get_section(id)).unwrap_or(None.into())
     }
     // subitems
     pub fn items(&self) -> Vec<Item> {

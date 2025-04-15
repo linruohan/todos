@@ -177,6 +177,17 @@ pub trait BaseObjectTrait {
             _ => Source::default(),
         }
     }
+
+    //     signal
+    fn deleted(&self) {}
+    fn updated(&self, update_id: &str) {}
+    fn archived(&self) {}
+    fn unarchived(&self) {}
+    fn loading_change(&self) {}
+    fn sensitive_change(&self) {}
+    fn filter_added(&self, filter: &FilterItem) {}
+    fn filter_removed(&self, filter: &FilterItem) {}
+    fn filter_updated(&self, filter: &FilterItem) {}
 }
 
 pub struct BaseObjectEvents {

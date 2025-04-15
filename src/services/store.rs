@@ -1,11 +1,10 @@
-use crate::BaseTrait;
-use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
-pub struct Store {}
-use crate::objects::BaseObject;
+use crate::objects::{BaseObject, BaseObjectTrait};
 use crate::utils::DateTime;
+use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
 use chrono::{Datelike, Local, NaiveDateTime};
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
+pub struct Store {}
 
 static STOREINSTANCE: OnceCell<Arc<Store>> = OnceCell::new();
 
@@ -31,7 +30,7 @@ impl Store {
     pub fn is_sources_empty(&self) -> bool {
         self.sources().len() <= 0
     }
-    pub fn get_collection_by_type(&self, obj_type: &dyn BaseTrait) -> Collection {
+    pub fn get_collection_by_type(&self, obj_type: &dyn BaseObjectTrait) -> Collection {
         match obj_type.object_type() {
             crate::enums::ObjectType::SECTION => Collection::Sections(self.sections()),
             crate::enums::ObjectType::ITEM => Collection::Items(self.items()),
@@ -92,7 +91,7 @@ impl Store {
     }
     pub fn delete_source(&self, source: Source) {
         if Database::default().delete_source(source.clone()) {
-            for project in self.get_projects_by_source(source.id_string()) {
+            for project in self.get_projects_by_source(source.id()) {
                 self.delete_project(project);
             }
         }
@@ -100,7 +99,7 @@ impl Store {
 
     pub fn update_source(&self, source: Source) {
         if Database::default().update_source(source.clone()) {
-            for project in self.get_projects_by_source(source.id_string()) {
+            for project in self.get_projects_by_source(source.id()) {
                 self.delete_project(project);
             }
         }
@@ -148,19 +147,18 @@ impl Store {
         }
     }
 
-    pub fn archive_project(&self, project: Project) {
+    pub fn archive_project(&self, project: &Project) {
         if Database::default().archive_project(project.clone()) {
-            for item in self.get_items_by_project(project.id_string().as_deref()) {
+            for item in self.get_items_by_project(project) {
                 self.archive_item(item, project.is_archived());
             }
-            for section in self.get_sections_by_project(project.id_string()) {
+            for section in self.get_sections_by_project(project.id()) {
                 let mut sec = section.clone();
                 sec.is_archived = project.is_archived;
                 self.archive_section(sec);
             }
         }
     }
-
 
     pub fn get_subprojects(&self, id: &str) -> Vec<Project> {
         self.projects()
@@ -221,13 +219,13 @@ impl Store {
         Database::default().get_items_collection()
     }
 
-    pub fn insert_item(&self, item: Item, insert: bool) {
-        if Database::default().insert_item(item.clone()) {
-            self.add_item(item.clone(), insert);
+    pub fn insert_item(&self, item: &Item, insert: bool) {
+        if Database::default().insert_item(item) {
+            self.add_item(item, insert);
         }
     }
 
-    pub fn add_item(&self, item: Item, insert: bool) {
+    pub fn add_item(&self, item: &Item, insert: bool) {
         let mut item1 = item.clone();
         // self.items().push(item);
         // item_added (item, insert);
@@ -276,11 +274,11 @@ impl Store {
     }
 
     pub fn delete_item(&self, item: &Item) {
-        if Database::default().delete_item(item.clone()) {
+        if Database::default().delete_item(item) {
             for subitem in self.get_subitems(item) {
                 self.delete_item(&subitem);
             }
-            item.project().item_deleted(item.clone());
+            item.project().item_deleted(item);
             if item.has_section() {
                 item.section().item_deleted(item.clone());
             }
@@ -312,9 +310,7 @@ impl Store {
     }
 
     pub fn get_subitems(&self, item: &Item) -> Vec<Item> {
-        self.items()
-            .iter()
-            .filter(|s| s.parent_id.as_deref() == Some(item.id_string()))
+        self.items().iter().filter(|s| s.parent_id.as_deref() == Some(item.id()))
             .collect()
     }
 
@@ -337,7 +333,16 @@ impl Store {
             .filter(|i| i.has_label(&label_id) && i.checked() == checked && !i.was_archived())
             .collect()
     }
-    pub fn get_item_by_baseobject(&self, baseobject: BaseObject) -> Vec<Item> {}
+    pub fn get_item_by_baseobject(&self, base: BaseObject) -> Vec<Item> {
+        self.items().iter().filter(|i| match i {
+            BaseObject::Project(_) => {
+                i.project_id.as_deref() == Some(base.id()) && i.section_id.as_deref() == Some("") && !i.has_parent()
+            }
+            BaseObject::Section(_) => {
+                i.section_id.as_deref() == Some(base.id()) && !i.has_parent()
+            }
+        }).cloned().collect()
+    }
     pub fn get_items_checked(&self) -> Vec<Item> {
         self.items().iter().filter(|i| i.checked()).collect()
     }
@@ -360,9 +365,16 @@ impl Store {
         self.items().iter().filter(|i| !i.has_due() && i.checked() == checked).collect()
     }
     pub fn get_items_repeating(&self, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|i| i.has_due() && i.due().is_recurring && i.checked() == checked && !i.was_archived()).collect()
+        self.items().iter().filter(|i| {
+            i.has_due() && i.due().is_recurring && i.checked() == checked && !i.was_archived()
+        }).collect()
     }
-    pub fn get_items_by_date_range(&self, start_date: &NaiveDateTime, end_date: &NaiveDateTime, checked: bool) -> Vec<Item> {
+    pub fn get_items_by_date_range(
+        &self,
+        start_date: &NaiveDateTime,
+        end_date: &NaiveDateTime,
+        checked: bool,
+    ) -> Vec<Item> {
         self.items().iter().filter(|s| self.valid_item_by_date_range(s, start_date, end_date, checked)).collect()
     }
     pub fn get_items_by_month(&self, date: &NaiveDateTime, checked: bool) -> Vec<Item> {
@@ -402,9 +414,7 @@ impl Store {
         self.items().iter().filter(|s| s.labels().len() <= 0 && s.checked() == checked && !s.was_archived()).collect()
     }
     pub fn get_items_no_parent(&self, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|i| !i.was_archived() &&
-            i.checked() == checked &&
-            !i.has_parent()).cloned().collect()
+        self.items().iter().filter(|i| !i.was_archived() && i.checked() == checked && !i.has_parent()).cloned().collect()
     }
     pub fn valid_item_by_date(&self, item: &Item, date: &NaiveDateTime, checked: bool) -> bool {
         if item.has_due() || item.was_archived() {
@@ -413,7 +423,13 @@ impl Store {
         item.checked() == checked && DateTime::default().is_same_day(&item.due().datetime(), date)
     }
 
-    pub fn valid_item_by_date_range(&self, item: &Item, start_date: &NaiveDateTime, end_date: &NaiveDateTime, checked: bool) -> bool {
+    pub fn valid_item_by_date_range(
+        &self,
+        item: &Item,
+        start_date: &NaiveDateTime,
+        end_date: &NaiveDateTime,
+        checked: bool,
+    ) -> bool {
         if item.has_due() || item.was_archived() {
             return false;
         }

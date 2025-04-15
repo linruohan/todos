@@ -1,4 +1,4 @@
-use crate::objects::{BaseObjectTrait, Project};
+use crate::objects::BaseObjectTrait;
 use crate::schema::reminders;
 use diesel::prelude::*;
 use diesel::Queryable;
@@ -22,9 +22,5 @@ pub struct Reminder {
     pub id: Option<String>,
     pub item_id: Option<String>,
 }
-impl Reminder {
-    pub fn id(&self) -> &str {
-        self.id.as_deref().unwrap_or("")
-    }
-}
-impl BaseObjectTrait for Project {}
+impl Reminder {}
+impl BaseObjectTrait for Reminder {}

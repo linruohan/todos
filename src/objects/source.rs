@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::objects::{BaseObjectTrait, Project};
+use crate::objects::BaseObjectTrait;
 use crate::{enums::SourceType, schema::sources};
 
 #[derive(
@@ -42,4 +42,4 @@ impl Source {
     }
 }
 
-impl BaseObjectTrait for Project {}
+impl BaseObjectTrait for Source {}
