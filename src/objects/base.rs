@@ -1,7 +1,6 @@
+use super::{FilterItem, Item, Label, Project, Reminder, Section, Source};
 use crate::enums::ObjectType;
 use std::{any::type_name, collections::HashMap};
-
-use super::{FilterItem, Item, Label, Project, Reminder, Section, Source};
 pub trait BaseTrait {
     fn type_name(&self) -> &str {
         let full_name = type_name::<Self>();
@@ -62,11 +61,7 @@ pub trait BaseTrait {
     }
 
     fn id(&self) -> &str;
-    fn id_mut(&mut self) -> &mut Option<String>;
-
-    fn set_id(&mut self, id: impl Into<String>) {
-        *self.id_mut() = Some(id.into());
-    }
+    fn set_id(&mut self, id: &str);
     fn id_string(&self) -> &str {
         self.id().into()
     }

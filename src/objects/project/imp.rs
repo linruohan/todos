@@ -39,10 +39,10 @@ pub struct Project {
 }
 
 impl Project {
-    pub(crate) fn item_added(&self, p0: &Item) {
+    pub(crate) fn item_added(&self, item: &Item) {
         todo!()
     }
-    pub(crate) fn item_deleted(&self, p0: &Item) {
+    pub(crate) fn item_deleted(&self, item: &Item) {
         todo!()
     }
 }
@@ -78,8 +78,7 @@ impl BaseTrait for Project {
     fn id(&self) -> &str {
         self.id.as_deref().unwrap_or_default()
     }
-
-    fn id_mut(&mut self) -> &mut Option<String> {
-        &mut self.id
+    fn set_id(&mut self, id: &str) {
+        self.id = Some(id.into());
     }
 }

@@ -101,7 +101,7 @@ impl BaseTrait for Label {
         self.id.as_deref().unwrap_or_default()
     }
 
-    fn id_mut(&mut self) -> &mut Option<String> {
-        &mut self.id
+    fn set_id(&mut self, id: &str) {
+        self.id = Some(id.into());
     }
 }

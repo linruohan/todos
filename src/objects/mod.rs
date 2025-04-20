@@ -33,12 +33,12 @@ pub(crate) use reminder::Reminder;
 pub(crate) use section::Section;
 pub(crate) use source::Source;
 
-#[derive(Debug)]
-pub enum BaseObjectEnum {
-    Project(Arc<Project>),
-    Section(Arc<Section>),
-    Reminder(Arc<Reminder>),
-    Label(Arc<Label>),
-    Item(Arc<Item>),
-    Source(Arc<Source>),
-}
+// #[derive(Debug, Clone)]
+// pub enum BaseObjectEnum {
+//     Project(Arc<Project>),
+//     Section(Arc<Section>),
+//     Reminder(Arc<Reminder>),
+//     Label(Arc<Label>),
+//     Item(Arc<Item>),
+//     Source(Arc<Source>),
+// }

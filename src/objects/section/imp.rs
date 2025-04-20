@@ -52,7 +52,7 @@ impl Section {
         Store::instance().get_project(self.project_id.as_ref()?) // Assuming Store has a method to get project by ID
     }
     pub fn items(&self) -> Vec<Item> {
-        let items = Store::instance().get_item_by_baseobject(self as &dyn BaseTrait);
+        let mut items = Store::instance().get_item_by_baseobject(Box::new(self.clone()));
         items.sort_by(|a, b| a.child_order.cmp(&b.child_order));
         items
     }
@@ -78,8 +78,7 @@ impl BaseTrait for Section {
     fn id(&self) -> &str {
         self.id.as_deref().unwrap_or_default()
     }
-
-    fn id_mut(&mut self) -> &mut Option<String> {
-        &mut self.id
+    fn set_id(&mut self, id: &str) {
+        self.id = Some(id.into());
     }
 }

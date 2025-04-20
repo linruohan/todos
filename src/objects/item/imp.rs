@@ -135,6 +135,9 @@ impl Item {
             _ => "planner-flag".to_string(),
         }
     }
+    pub fn has_reminders(&self) -> bool {
+        self.reminders().len() > 0
+    }
 
     pub fn priority_color(&self) -> String {
         match self.priority {
@@ -311,7 +314,7 @@ impl BaseTrait for Item {
         self.id.as_deref().unwrap_or_default()
     }
 
-    fn id_mut(&mut self) -> &mut Option<String> {
-        &mut self.id
+    fn set_id(&mut self, id: &str) {
+        self.id = Some(id.into());
     }
 }

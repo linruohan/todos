@@ -1,3 +1,4 @@
+use crate::enums::ObjectType;
 use crate::objects::{BaseObject, BaseTrait};
 use crate::utils::DateTime;
 use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
@@ -30,13 +31,38 @@ impl Store {
     pub fn is_sources_empty(&self) -> bool {
         self.sources().len() <= 0
     }
-    pub fn get_collection_by_type(&self, obj_type: &dyn BaseTrait) -> Collection {
+    fn convert_to_trait_objects<T: BaseTrait + Clone + 'static>(
+        &self,
+        items: &[T],
+    ) -> Vec<Box<dyn BaseTrait>> {
+        items
+            .iter()
+            .map(|item| Box::new(item.clone()) as Box<dyn BaseTrait>)
+            .collect()
+    }
+    pub fn get_collection_by_type(&self, obj_type: Box<dyn BaseTrait>) -> Vec<Box<dyn BaseTrait>> {
         match obj_type.object_type() {
-            crate::enums::ObjectType::SECTION => Collection::Sections(self.sections()),
-            crate::enums::ObjectType::ITEM => Collection::Items(self.items()),
-            crate::enums::ObjectType::LABEL => Collection::Labels(self.labels()),
-            crate::enums::ObjectType::PROJECT => Collection::Projects(self.projects()),
-            _ => Collection::None,
+            ObjectType::SECTION => self
+                .sections()
+                .iter()
+                .map(|s| Box::new(s.clone()) as Box<dyn BaseTrait>)
+                .collect(),
+            ObjectType::ITEM => self
+                .items()
+                .iter()
+                .map(|s| Box::new(s.clone()) as Box<dyn BaseTrait>)
+                .collect(),
+            ObjectType::LABEL => self
+                .labels()
+                .iter()
+                .map(|s| Box::new(s.clone()) as Box<dyn BaseTrait>)
+                .collect(),
+            ObjectType::PROJECT => self
+                .projects()
+                .iter()
+                .map(|s| Box::new(s.clone()) as Box<dyn BaseTrait>)
+                .collect(),
+            _ => Vec::new(),
         }
     }
 
@@ -314,9 +340,9 @@ impl Store {
             for subitem in self.get_subitems(item) {
                 self.delete_item(&subitem);
             }
-            item.project().item_deleted(item);
+            item.project().and_then(|p| Some(p.item_deleted(item)));
             if item.has_section() {
-                item.section().item_deleted(item);
+                item.section().and_then(|s| Some(s.item_deleted(item)));
             }
         }
     }
@@ -336,7 +362,6 @@ impl Store {
             .iter()
             .find(|i| i.id.as_deref() == Some(id))
             .cloned()
-            .collect()
     }
 
     pub fn get_items_by_section(&self, id: &str) -> Vec<Item> {
@@ -383,18 +408,15 @@ impl Store {
             .cloned()
             .collect()
     }
-    pub fn get_item_by_baseobject(&self, base: BaseObject) -> Vec<Item> {
+    pub fn get_item_by_baseobject(&self, base: Box<dyn BaseTrait>) -> Vec<Item> {
         self.items()
             .iter()
-            .filter(|i| match i {
-                BaseObject::Project(_) => {
-                    i.project_id.as_deref() == Some(base.id())
-                        && i.section_id.as_deref() == Some("")
-                        && !i.has_parent()
-                }
-                BaseObject::Section(_) => {
-                    i.section_id.as_deref() == Some(base.id()) && !i.has_parent()
-                }
+            .filter(|item| match (&item.project_id, &item.section_id) {
+                // 项目过滤
+                (Some(pid), None) => pid == base.id(),
+                // 章节过滤
+                (Some(_), Some(sid)) => sid == base.id(),
+                _ => false,
             })
             .cloned()
             .collect()
