@@ -1,12 +1,13 @@
-use crate::enums::SourceType;
-use crate::objects::{BaseObjectTrait, BaseTrait};
-use crate::schema::labels;
+use crate::Source;
 use crate::Store;
 use crate::Util;
+use crate::enums::SourceType;
+use crate::objects::BaseTrait;
+use crate::schema::labels;
 use derive_builder::Builder;
 
-use diesel::prelude::*;
 use diesel::Queryable;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 #[derive(
     QueryableByName,
@@ -70,7 +71,7 @@ impl Label {
             .unwrap_or(SourceType::LOCAL.to_string())
     }
     pub fn source_type(&self) -> SourceType {
-        self.source().source_type()
+        self.source().map_or(SourceType::NONE, |s| s.source_type())
     }
 
     pub fn label_count(&self) -> usize {
@@ -88,6 +89,19 @@ impl Label {
         }
         Store::instance().delete_label(self.clone());
     }
+    fn source(&self) -> Option<Source> {
+        self.source_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_source(id))
+    }
 }
 
-impl BaseObjectTrait for Label {}
+impl BaseTrait for Label {
+    fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or_default()
+    }
+
+    fn id_mut(&mut self) -> &mut Option<String> {
+        &mut self.id
+    }
+}

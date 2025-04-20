@@ -1,3 +1,4 @@
+#![recursion_limit = "1024"]
 #![allow(unused)]
 use std::error::Error;
 pub mod constants;
@@ -6,9 +7,9 @@ pub mod objects;
 pub mod services;
 pub mod utils;
 use chrono::Datelike;
-pub(crate) use objects::{schema, BaseObject, BaseObjectTrait, Database};
 pub(crate) use objects::{Attachment, Item, Label, Project, Reminder, Section, Source};
-pub(crate) use services::{load_config, Store};
+pub(crate) use objects::{BaseObject, BaseTrait, Database, schema};
+pub(crate) use services::{Store, load_config};
 pub(crate) use utils::Util;
 fn main() -> Result<(), Box<dyn Error>> {
     // let db = Database::default();

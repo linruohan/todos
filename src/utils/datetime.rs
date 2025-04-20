@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::{cmp::Ordering, str::FromStr};
 
-use crate::{enums::RecurrencyType, objects::DueDate, Item};
+use crate::{Item, enums::RecurrencyType, objects::DueDate};
 use anyhow::Result;
 use chrono::{
     Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, ParseError, Timelike,
@@ -27,7 +27,7 @@ impl DateTime {
         }
     }
 
-    pub fn get_relative_date_from_date(&self, datetime: NaiveDateTime) -> String {
+    pub fn get_relative_date_from_date(&self, datetime: &NaiveDateTime) -> String {
         let mut returned = "";
         let format_str = self.get_default_date_format_from_date(datetime).clone();
         if (self.is_today(datetime)) {
@@ -55,29 +55,19 @@ impl DateTime {
         let human_time = HumanTime::from(now - datetime);
         human_time.to_text_en(Accuracy::Rough, chrono_humanize::Tense::Past)
     }
-
-    pub fn days_left(&self, datetime: NaiveDateTime, show_today: bool) -> String {
-        let days = (datetime - Local::now().naive_local()).num_days();
-        if self.is_today(datetime) {
-            return if show_today {
-                "Today".to_string()
-            } else {
-                "".to_string()
-            };
-        } else if self.is_overdue(datetime) {
-            return format!(
-                "{} {} ago",
-                (days * -1).to_string(),
-                if days > 1 { "days" } else { "day" }
-            );
-        } else {
-            return format!(
-                "{} {} left",
-                (days + 1).to_string(),
-                if days > 1 { "days" } else { "day" }
-            );
+    fn format_duration(&self, days: i64, suffix: &str) -> String {
+        let unit = if days > 1 { "days" } else { "day" };
+        format!("{} {} {}", days, unit, suffix)
+    }
+    pub fn days_left(&self, datetime: &NaiveDateTime, show_today: bool) -> String {
+        let days = (*datetime - Local::now().naive_local()).num_days();
+        match (self.is_today(datetime), days.cmp(&0)) {
+            (true, _) if show_today => "Today".into(),
+            (true, _) => String::new(),
+            (false, Ordering::Less) => self.format_duration(-days, "ago"),
+            (false, Ordering::Greater) => self.format_duration(days + 1, "left"),
+            (false, Ordering::Equal) => String::new(),
         }
-        return "".to_string();
     }
 
     pub fn get_default_time_format(&self) -> &str {
@@ -97,19 +87,19 @@ impl DateTime {
         return self.is_same_day(date, &(Local::now().naive_local() - Duration::days(1)));
     }
 
-    pub fn is_same_day(&self, day1: &NaiveDateTime, day2: &NaiveDateTime) -> bool {
-        return day1.year() == day2.year() && day1.day() == day2.day();
+    pub fn is_same_day(&self, dt1: &NaiveDateTime, dt2: &NaiveDateTime) -> bool {
+        return dt1.year() == dt2.year() && dt1.day() == dt2.day();
     }
 
-    pub fn is_overdue(&self, date: NaiveDateTime) -> bool {
+    pub fn is_overdue(&self, date: &NaiveDateTime) -> bool {
         // date在今天之前，说明是过期了
-        if date < Local::now().naive_local() {
+        if date < &Local::now().naive_local() {
             return true;
         }
         return false;
     }
 
-    pub fn get_calendar_icon(&self, date: NaiveDateTime) -> &str {
+    pub fn get_calendar_icon(&self, date: &NaiveDateTime) -> &str {
         if self.is_today(date) {
             return "planner-today";
         }
@@ -122,35 +112,29 @@ impl DateTime {
         // }
     }
 
-    pub fn has_time(&self, datetime: NaiveDateTime) -> bool {
-        if (datetime == EMPTY_DATETIME) {
-            return false;
-        }
-        if (datetime.hour() == 0 && datetime.minute() == 0 && datetime.second() == 0) {
-            return false;
-        }
-        return true;
+    pub fn has_time(&self, datetime: &NaiveDateTime) -> bool {
+        datetime == &EMPTY_DATETIME && datetime.time() != NaiveTime::default()
     }
 
-    pub fn is_today(&self, date: NaiveDateTime) -> bool {
-        if date == EMPTY_DATETIME {
+    pub fn is_today(&self, date: &NaiveDateTime) -> bool {
+        if date == &EMPTY_DATETIME {
             return false;
         }
-        return self.is_same_day(date, Local::now().naive_local());
+        return self.is_same_day(date, &Local::now().naive_local());
     }
 
-    pub fn is_tomorrow(&self, date: NaiveDateTime) -> bool {
-        if date == EMPTY_DATETIME {
+    pub fn is_tomorrow(&self, date: &NaiveDateTime) -> bool {
+        if date == &EMPTY_DATETIME {
             return false;
         }
-        return self.is_same_day(date, Local::now().naive_local() + Duration::days(1));
+        return self.is_same_day(date, &(Local::now().naive_local() + Duration::days(1)));
     }
 
-    pub fn is_next_week(&self, date: NaiveDateTime) -> bool {
-        if date == EMPTY_DATETIME {
+    pub fn is_next_week(&self, date: &NaiveDateTime) -> bool {
+        if date == &EMPTY_DATETIME {
             return false;
         }
-        return self.is_same_day(date, Local::now().naive_local() + Duration::days(7));
+        return self.is_same_day(date, &(Local::now().naive_local() + Duration::days(7)));
     }
 
     pub fn get_date_from_string(&self, date: String) -> NaiveDateTime {
@@ -419,7 +403,7 @@ impl DateTime {
         format!("{}%m-%d %p", year)
     }
 
-    pub fn get_todoist_datetime_format(&self, date: NaiveDateTime) -> String {
+    pub fn get_todoist_datetime_format(&self, date: &NaiveDateTime) -> String {
         if (self.has_time(date)) {
             return format!(
                 "{}T{}",
@@ -433,7 +417,7 @@ impl DateTime {
         return "".to_string();
     }
 
-    pub fn has_time_from_string(&self, date: NaiveDateTime) -> bool {
+    pub fn has_time_from_string(&self, date: &NaiveDateTime) -> bool {
         return self.has_time(date);
     }
 
@@ -556,7 +540,7 @@ impl DateTime {
 
         return format!(
             " ({}) ",
-            self.get_relative_date_from_date(item.due().datetime())
+            self.get_relative_date_from_date(&item.due().datetime())
         );
     }
 

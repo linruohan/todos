@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::objects::BaseObjectTrait;
+use crate::objects::BaseTrait;
 use crate::{enums::SourceType, schema::sources};
 
 #[derive(
@@ -42,4 +42,16 @@ impl Source {
     }
 }
 
-impl BaseObjectTrait for Source {}
+impl BaseTrait for Source {
+    fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or_default()
+    }
+
+    fn id_mut(&mut self) -> &mut Option<String> {
+        &mut self.id
+    }
+
+    fn source(&self) -> Source {
+        todo!()
+    }
+}

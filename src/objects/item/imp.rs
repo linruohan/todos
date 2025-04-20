@@ -1,12 +1,12 @@
 use crate::enums::{ItemType, SourceType};
-use crate::objects::{BaseObjectTrait, DueDate};
+use crate::objects::{BaseTrait, DueDate};
 use crate::schema::items;
 use crate::utils::{self, EMPTY_DATETIME};
-use crate::{constants, Attachment, Label, Project, Reminder, Section, Store, Util};
+use crate::{Attachment, Label, Project, Reminder, Section, Source, Store, Util, constants};
 use chrono::{Local, NaiveDateTime};
 use derive_builder::Builder;
-use diesel::prelude::*;
 use diesel::Queryable;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 #[derive(
@@ -77,6 +77,7 @@ impl Item {
     pub fn attachment_deleted(&self, attachment: &Attachment) {}
     pub fn pin_updated(&self) {}
 }
+
 impl Item {
     pub(crate) fn has_labels(&self) -> bool {
         self.labels().len() > 0
@@ -108,7 +109,8 @@ impl Item {
         if project.id == self.project_id {
             return true;
         }
-        self.parent().map(|p| p.exists_project(project))
+        self.parent()
+            .map_or(false, |parent| parent.exists_project(project))
     }
     pub fn get_label(&self, id: &str) -> Option<Label> {
         self.labels()
@@ -167,7 +169,7 @@ impl Item {
         if self.due().datetime() == EMPTY_DATETIME {
             return false;
         }
-        utils::DateTime::default().has_time(self.due().datetime())
+        utils::DateTime::default().has_time(&self.due().datetime())
     }
     pub fn completed_date(&self) -> NaiveDateTime {
         self.completed_at
@@ -191,6 +193,10 @@ impl Item {
             .and_then(|id| Store::instance().get_item(id))
             .is_some()
     }
+    pub fn ics(&self) -> &str {
+        // Services.Todoist.get_default ().get_string_member_by_object (extra_data, "ics")
+        ""
+    }
     pub fn added_datetime(&self) -> NaiveDateTime {
         self.added_at
             .as_deref()
@@ -211,20 +217,20 @@ impl Item {
             })
             .unwrap_or_else(|| EMPTY_DATETIME)
     }
-    pub fn parent(&self) -> Item {
+    pub fn parent(&self) -> Option<Item> {
         self.parent_id
             .as_deref()
-            .and_then(|id| Store::instance().get_item(id)).unwrap_or(None.into())
+            .and_then(|id| Store::instance().get_item(id))
     }
-    pub fn project(&self) -> Project {
+    pub fn project(&self) -> Option<Project> {
         self.project_id
             .as_deref()
-            .and_then(|id| Store::instance().get_project(id)).unwrap_or(None.into())
+            .and_then(|id| Store::instance().get_project(id))
     }
-    pub fn section(&self) -> Section {
+    pub fn section(&self) -> Option<Section> {
         self.section_id
             .as_deref()
-            .and_then(|id| Store::instance().get_section(id)).unwrap_or(None.into())
+            .and_then(|id| Store::instance().get_section(id))
     }
     // subitems
     pub fn items(&self) -> Vec<Item> {
@@ -233,13 +239,13 @@ impl Item {
         items
     }
     pub fn items_uncomplete(&self) -> Vec<Item> {
-        Store::instance().get_subitems_uncomplete(self.clone())
+        Store::instance().get_subitems_uncomplete(self)
     }
     pub fn reminders(&self) -> Vec<Reminder> {
-        Store::instance().get_reminders_by_item(self.clone())
+        Store::instance().get_reminders_by_item(self)
     }
     pub fn attachments(&self) -> Vec<Attachment> {
-        Store::instance().get_attachments_by_item(self.clone())
+        Store::instance().get_attachments_by_item(self)
     }
 
     pub fn get_caldav_categories(&self) {}
@@ -275,13 +281,13 @@ impl Item {
         todo!()
     }
     pub fn update_local(&self) {
-        Store::instance().update_item(self.clone(), "".to_string());
+        Store::instance().update_item(self, "".to_string());
     }
     pub fn update(&self, update_id: String) {
         if let Some(project) = self.project() {
             match project.source_type() {
                 SourceType::LOCAL => {
-                    Store::instance().update_item(self.clone(), update_id);
+                    Store::instance().update_item(self, update_id);
                 }
                 _ => {}
             }
@@ -293,6 +299,19 @@ impl Item {
             .or_else(|| self.section().map(|s| s.was_archived()))
             .unwrap_or_else(|| self.project().map_or(false, |p| p.is_archived()))
     }
+    fn source(&self) -> Option<Source> {
+        self.project()
+            .as_ref()
+            .map_or(Some(Source::default()), |p| p.source())
+    }
 }
 
-impl BaseObjectTrait for Item {}
+impl BaseTrait for Item {
+    fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or_default()
+    }
+
+    fn id_mut(&mut self) -> &mut Option<String> {
+        &mut self.id
+    }
+}

@@ -1,6 +1,6 @@
 use crate::{constants, objects::Color};
 use rand::Rng;
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 pub struct Util {
     pub colors: HashMap<String, Color>,
@@ -1242,11 +1242,12 @@ impl Util {
     }
 
     pub fn get_reminders_mm_offset(&self) -> i32 {
-        let value = Services
-            .Settings
-            .get_default()
-            .settings
-            .get_enum("automatic-reminders");
+        // let value = Services
+        //     .Settings
+        //     .get_default()
+        //     .settings
+        //     .get_enum("automatic-reminders");
+        let value = 4;
         match value {
             0 => 0,
             1 => 10,

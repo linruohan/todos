@@ -1,10 +1,10 @@
 use crate::enums::SourceType;
-use crate::objects::{BaseObjectTrait, Item};
+use crate::objects::{BaseTrait, Item};
 use crate::schema::projects;
-use crate::Store;
+use crate::{Source, Store};
+use diesel::Queryable;
 use diesel::prelude::*;
 use diesel::row::NamedRow;
-use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -55,19 +55,31 @@ impl Project {
         self.is_archived.unwrap_or(0) > 0
     }
     pub fn source_type(&self) -> SourceType {
-        self.source().source_type()
+        self.source().map_or(SourceType::NONE, |s| s.source_type())
     }
     pub(crate) fn update_count(&self) {
         todo!()
     }
-    pub fn parent(&self) -> Project {
+    pub fn parent(&self) -> Option<Project> {
         self.parent_id
             .as_deref()
             .and_then(|id| Store::instance().get_project(id))
-            .unwrap_or_else(|_| None.into())
     }
     pub fn add_subproject(&self, subproject: &Project) {
         Store::instance().insert_project(&subproject);
     }
+    pub fn source(&self) -> Option<Source> {
+        self.source_id
+            .as_deref()
+            .and_then(|id| Store::instance().get_source(id))
+    }
 }
-impl BaseObjectTrait for Project {}
+impl BaseTrait for Project {
+    fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or_default()
+    }
+
+    fn id_mut(&mut self) -> &mut Option<String> {
+        &mut self.id
+    }
+}

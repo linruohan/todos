@@ -1,3 +1,4 @@
+pub mod base;
 pub mod base_object;
 pub mod filters;
 
@@ -15,8 +16,11 @@ pub mod reminder;
 pub mod section;
 pub mod source;
 
+use std::sync::Arc;
+
 pub(crate) use attachment::Attachment;
-pub(crate) use base_object::{BaseObject, BaseObjectTrait};
+pub(crate) use base::BaseTrait;
+pub(crate) use base_object::BaseObject;
 pub(crate) use color::Color;
 pub(crate) use database::Database;
 pub(crate) use due_date::DueDate;
@@ -28,3 +32,13 @@ pub(crate) use queue::Queue;
 pub(crate) use reminder::Reminder;
 pub(crate) use section::Section;
 pub(crate) use source::Source;
+
+#[derive(Debug)]
+pub enum BaseObjectEnum {
+    Project(Arc<Project>),
+    Section(Arc<Section>),
+    Reminder(Arc<Reminder>),
+    Label(Arc<Label>),
+    Item(Arc<Item>),
+    Source(Arc<Source>),
+}

@@ -30,6 +30,7 @@ impl DueDate {
         }
     }
     pub fn datetime(&self) -> NaiveDateTime {
+        // NaiveDateTime::from_str(&self.date)
         NaiveDateTime::from_str(&self.date).unwrap()
     }
     pub fn set_datetime(&mut self, value: NaiveDateTime) {

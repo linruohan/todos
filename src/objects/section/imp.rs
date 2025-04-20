@@ -1,9 +1,12 @@
-use crate::objects::{BaseObjectTrait, Item};
+use crate::objects::{BaseTrait, Item};
 use crate::schema::sections;
+use crate::{Source, Store};
 use derive_builder::Builder;
-use diesel::prelude::*;
 use diesel::Queryable;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+
+use crate::Project;
 #[derive(
     QueryableByName,
     Builder,
@@ -37,8 +40,22 @@ impl Section {
     pub fn item_added(&self, item: &Item) {
         todo!()
     }
+    pub fn item_deleted(&self, item: &Item) {
+        todo!()
+    }
+    pub fn section_count_updated(&self) {
+        todo!()
+    }
 }
 impl Section {
+    pub fn project(&self) -> Option<Project> {
+        Store::instance().get_project(self.project_id.as_ref()?) // Assuming Store has a method to get project by ID
+    }
+    pub fn items(&self) -> Vec<Item> {
+        let items = Store::instance().get_item_by_baseobject(self as &dyn BaseTrait);
+        items.sort_by(|a, b| a.child_order.cmp(&b.child_order));
+        items
+    }
     pub fn is_archived(&self) -> bool {
         self.is_archived.unwrap_or(0) > 0
     }
@@ -47,9 +64,22 @@ impl Section {
     }
     pub fn was_archived(&self) -> bool {
         self.project()
-            .map(|s| s.was_archived())
-            .or_else(|| self.is_archived())
+            .as_ref()
+            .map_or(self.is_archived(), |p| p.is_archived())
+    }
+    pub fn source(&self) -> Option<Source> {
+        self.project()
+            .as_ref()
+            .map_or(Some(Source::default()), |p| p.source())
     }
 }
 
-impl BaseObjectTrait for Section {}
+impl BaseTrait for Section {
+    fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or_default()
+    }
+
+    fn id_mut(&mut self) -> &mut Option<String> {
+        &mut self.id
+    }
+}

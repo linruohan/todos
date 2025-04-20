@@ -1,4 +1,4 @@
-use crate::objects::{BaseObject, BaseObjectTrait};
+use crate::objects::{BaseObject, BaseTrait};
 use crate::utils::DateTime;
 use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
 use chrono::{Datelike, Local, NaiveDateTime};
@@ -30,7 +30,7 @@ impl Store {
     pub fn is_sources_empty(&self) -> bool {
         self.sources().len() <= 0
     }
-    pub fn get_collection_by_type(&self, obj_type: &dyn BaseObjectTrait) -> Collection {
+    pub fn get_collection_by_type(&self, obj_type: &dyn BaseTrait) -> Collection {
         match obj_type.object_type() {
             crate::enums::ObjectType::SECTION => Collection::Sections(self.sections()),
             crate::enums::ObjectType::ITEM => Collection::Items(self.items()),
@@ -44,8 +44,8 @@ impl Store {
     pub fn attachments(&self) -> Vec<Attachment> {
         Database::default().get_attachments_collection()
     }
-    pub fn delete_attachment(&self, attachment: Attachment) {
-        if Database::default().delete_attachment(attachment.clone()) {
+    pub fn delete_attachment(&self, attachment: &Attachment) {
+        if Database::default().delete_attachment(attachment) {
             // attachment.deleted ();
             // attachment_deleted (attachment);
             // _attachments.remove (attachment);
@@ -54,18 +54,19 @@ impl Store {
         }
     }
 
-    pub fn insert_attachment(&self, attachment: Attachment) {
-        if Database::default().insert_attachment(attachment.clone()) {
+    pub fn insert_attachment(&self, attachment: &Attachment) {
+        if Database::default().insert_attachment(attachment) {
             // attachments.add (attachment);
             // attachment.item.attachment_added (attachment);
             todo!()
         }
     }
 
-    pub fn get_attachments_by_item(&self, item: Item) -> Vec<Attachment> {
+    pub fn get_attachments_by_item(&self, item: &Item) -> Vec<Attachment> {
         self.attachments()
             .iter()
             .filter(|s| s.item_id == item.id)
+            .cloned()
             .collect()
     }
 
@@ -81,26 +82,25 @@ impl Store {
             .cloned()
     }
 
-    pub fn insert_source(&self, source: Source) {
-        let mut new_source = source;
+    pub fn insert_source(&self, source: &Source) {
+        let mut new_source = source.clone();
         new_source.child_order = Some(self.sources().len() as i32 + 1);
         if Database::default().insert_source(new_source.clone()) {
-
             // self.sources().push(new_source.clone());
         }
     }
-    pub fn delete_source(&self, source: Source) {
+    pub fn delete_source(&self, source: &Source) {
         if Database::default().delete_source(source.clone()) {
             for project in self.get_projects_by_source(source.id()) {
-                self.delete_project(project);
+                self.delete_project(&project);
             }
         }
     }
 
-    pub fn update_source(&self, source: Source) {
-        if Database::default().update_source(source.clone()) {
+    pub fn update_source(&self, source: &Source) {
+        if Database::default().update_source(source) {
             for project in self.get_projects_by_source(source.id()) {
-                self.delete_project(project);
+                self.delete_project(&project);
             }
         }
     }
@@ -111,7 +111,7 @@ impl Store {
     pub fn insert_project(&self, project: &Project) {
         if Database::default().insert_project(&project) {
             if let Some(parent) = project.parent() {
-                parent.add_subproject(project.clone());
+                parent.add_subproject(project);
             }
         }
     }
@@ -124,7 +124,8 @@ impl Store {
     pub fn get_projects_by_source(&self, id: &str) -> Vec<Project> {
         self.projects()
             .iter()
-            .find(|s| s.source_id.as_deref() == Some(id))
+            .filter(|s| s.source_id.as_deref() == Some(id))
+            .cloned()
             .collect()
     }
     pub fn update_project(&self, project: Project) {
@@ -132,17 +133,17 @@ impl Store {
             // project.updated();
         }
     }
-    pub fn delete_project(&self, project: Project) {
+    pub fn delete_project(&self, project: &Project) {
         let project_id = project.id_string();
         if Database::default().delete_project(project) {
             for section in self.get_sections_by_project(&project_id) {
-                self.delete_section(section);
+                self.delete_section(&section);
             }
-            for item in self.get_items_by_project(&project_id) {
-                self.delete_item(item);
+            for item in self.get_items_by_project(project) {
+                self.delete_item(&item);
             }
             for subproject in self.get_subprojects(&project_id) {
-                self.delete_project(subproject);
+                self.delete_project(&subproject);
             }
         }
     }
@@ -155,7 +156,7 @@ impl Store {
             for section in self.get_sections_by_project(project.id()) {
                 let mut sec = section.clone();
                 sec.is_archived = project.is_archived;
-                self.archive_section(sec);
+                self.archive_section(&sec);
             }
         }
     }
@@ -164,6 +165,7 @@ impl Store {
         self.projects()
             .iter()
             .filter(|s| s.parent_id.as_deref() == Some(id))
+            .cloned()
             .collect()
     }
 
@@ -171,16 +173,22 @@ impl Store {
         self.projects()
             .iter()
             .filter(|s| s.is_inbox_project())
+            .cloned()
             .collect()
     }
     pub fn get_all_projects_archived(&self) -> Vec<Project> {
-        self.projects().iter().filter(|s| s.is_archived()).collect()
+        self.projects()
+            .iter()
+            .filter(|s| s.is_archived())
+            .cloned()
+            .collect()
     }
-    pub fn get_all_projects_by_search(&self, search_text: &str) -> Vec<Section> {
+    pub fn get_all_projects_by_search(&self, search_text: &str) -> Vec<Project> {
         let search_lover = search_text.to_lowercase();
         self.projects()
             .iter()
             .filter(|s| s.name.contains(&search_lover) && !s.is_archived())
+            .cloned()
             .collect()
     }
 
@@ -191,13 +199,14 @@ impl Store {
     pub fn get_section(&self, id: &str) -> Option<Section> {
         self.sections()
             .iter()
-            .filter(|s| s.id.as_deref() == Some(id))
-            .collect()
+            .find(|s| s.id.as_deref() == Some(id))
+            .cloned()
     }
     pub fn get_sections_by_project(&self, id: &str) -> Vec<Section> {
         self.sections()
             .iter()
-            .find(|s| s.project_id.as_deref() == Some(id))
+            .filter(|s| s.project_id.as_deref() == Some(id))
+            .cloned()
             .collect()
     }
     pub fn get_all_sections_by_search(&self, search_text: &str) -> Vec<Section> {
@@ -211,7 +220,36 @@ impl Store {
                     .unwrap_or(false)
                     && !s.was_archived()
             })
+            .cloned()
             .collect()
+    }
+    pub fn archive_section(&self, section: &Section) {
+        if Database::default().archive_section(section) {
+            for item in self.get_items_by_section(section.id()) {
+                self.delete_item(&item);
+            }
+            // section.archived ();
+            // section_updated (section);
+            // section.section_count_updated ();
+            // section.project.section_count_updated ();
+        }
+    }
+    pub fn insert_section(&self, section: &Section) {
+        if Database::default().insert_section(section) {
+            // self.sections().push(section.clone());
+            // section_added (section);
+            // section.project.section_count_updated ();
+        }
+    }
+    pub fn delete_section(&self, section: &Section) {
+        if Database::default().delete_section(section) {
+            for item in section.items() {
+                self.delete_item(&item);
+            }
+            // section.deleted ();
+            // section_deleted (section);
+            // _sections.remove (section);
+        }
     }
 
     // items
@@ -230,26 +268,24 @@ impl Store {
         // self.items().push(item);
         // item_added (item, insert);
         if (insert) {
-            if (!item.parent_id.is_none()) {
-                item.parent().item_added(item);
-            } else {
-                if (item.section_id.is_none()) {
-                    item.project().item_added(item);
-                } else {
-                    item.section().item_added(item);
-                }
+            if let Some(parent) = item.parent() {
+                parent.item_added(item);
+            } else if let Some(section) = item.section() {
+                section.item_added(item);
+            } else if let Some(project) = item.project() {
+                project.item_added(item);
             }
         }
         // Services.EventBus.get_default ().update_items_position (item.project_id, item.section_id);
     }
 
-    pub fn update_item(&self, item: Item, update_id: String) {
-        if Database::default().update_item(item.clone()) {
+    pub fn update_item(&self, item: &Item, update_id: String) {
+        if Database::default().update_item(item) {
             // self.item_updated(item.clone(), update_id.clone());
         }
     }
-    pub fn update_item_pin(&self, item: Item) {
-        if Database::default().update_item(item.clone()) {
+    pub fn update_item_pin(&self, item: &Item) {
+        if Database::default().update_item(item) {
             item.pin_updated();
         }
     }
@@ -280,7 +316,7 @@ impl Store {
             }
             item.project().item_deleted(item);
             if item.has_section() {
-                item.section().item_deleted(item.clone());
+                item.section().item_deleted(item);
             }
         }
     }
@@ -299,6 +335,7 @@ impl Store {
         self.items()
             .iter()
             .find(|i| i.id.as_deref() == Some(id))
+            .cloned()
             .collect()
     }
 
@@ -306,11 +343,15 @@ impl Store {
         self.items()
             .iter()
             .filter(|s| s.section_id.as_deref() == Some(id))
+            .cloned()
             .collect()
     }
 
     pub fn get_subitems(&self, item: &Item) -> Vec<Item> {
-        self.items().iter().filter(|s| s.parent_id.as_deref() == Some(item.id()))
+        self.items()
+            .iter()
+            .filter(|s| s.parent_id.as_deref() == Some(item.id()))
+            .cloned()
             .collect()
     }
 
@@ -318,12 +359,20 @@ impl Store {
         self.items()
             .iter()
             .filter(|s| s.checked == Some(1) && !s.was_archived())
+            .cloned()
             .collect()
+    }
+    pub fn get_item_by_ics(&self, ics: &str) -> Option<Item> {
+        self.items()
+            .iter()
+            .find(|i| i.id.as_deref() == Some(ics))
+            .cloned()
     }
     pub fn get_items_has_labels(&self) -> Vec<Item> {
         self.items()
             .iter()
             .filter(|s| s.has_labels() && s.completed() && !s.was_archived())
+            .cloned()
             .collect()
     }
 
@@ -331,43 +380,82 @@ impl Store {
         self.items()
             .iter()
             .filter(|i| i.has_label(&label_id) && i.checked() == checked && !i.was_archived())
+            .cloned()
             .collect()
     }
     pub fn get_item_by_baseobject(&self, base: BaseObject) -> Vec<Item> {
-        self.items().iter().filter(|i| match i {
-            BaseObject::Project(_) => {
-                i.project_id.as_deref() == Some(base.id()) && i.section_id.as_deref() == Some("") && !i.has_parent()
-            }
-            BaseObject::Section(_) => {
-                i.section_id.as_deref() == Some(base.id()) && !i.has_parent()
-            }
-        }).cloned().collect()
+        self.items()
+            .iter()
+            .filter(|i| match i {
+                BaseObject::Project(_) => {
+                    i.project_id.as_deref() == Some(base.id())
+                        && i.section_id.as_deref() == Some("")
+                        && !i.has_parent()
+                }
+                BaseObject::Section(_) => {
+                    i.section_id.as_deref() == Some(base.id()) && !i.has_parent()
+                }
+            })
+            .cloned()
+            .collect()
     }
     pub fn get_items_checked(&self) -> Vec<Item> {
-        self.items().iter().filter(|i| i.checked()).collect()
+        self.items()
+            .iter()
+            .filter(|i| i.checked())
+            .cloned()
+            .collect()
     }
     pub fn get_items_checked_by_project(&self, project: &Project) -> Vec<Item> {
-        self.items().iter().filter(|i| i.project_id == project.id && i.checked()).collect()
+        self.items()
+            .iter()
+            .filter(|i| i.project_id == project.id && i.checked())
+            .cloned()
+            .collect()
     }
-    pub fn get_subitems_uncomplete(&self, item: Item) -> Vec<Item> {
-        self.items().iter().filter(|i| i.parent_id == i.id && !i.checked()).collect()
+    pub fn get_subitems_uncomplete(&self, item: &Item) -> Vec<Item> {
+        self.items()
+            .iter()
+            .filter(|i| i.parent_id == i.id && !i.checked())
+            .cloned()
+            .collect()
     }
     pub fn get_items_by_project(&self, project: &Project) -> Vec<Item> {
-        self.items().iter().filter(|i| i.exists_project(project)).collect()
+        self.items()
+            .iter()
+            .filter(|i| i.exists_project(project))
+            .cloned()
+            .collect()
     }
     pub fn get_items_by_project_pinned(&self, project: &Project) -> Vec<Item> {
-        self.items().iter().filter(|i| i.exists_project(project) && i.pinned()).collect()
+        self.items()
+            .iter()
+            .filter(|i| i.exists_project(project) && i.pinned())
+            .cloned()
+            .collect()
     }
     pub fn get_items_by_date(&self, date: &NaiveDateTime, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|i| self.valid_item_by_date(i, date, checked)).collect()
+        self.items()
+            .iter()
+            .filter(|i| self.valid_item_by_date(i, date, checked))
+            .cloned()
+            .collect()
     }
     pub fn get_items_no_date(&self, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|i| !i.has_due() && i.checked() == checked).collect()
+        self.items()
+            .iter()
+            .filter(|i| !i.has_due() && i.checked() == checked)
+            .cloned()
+            .collect()
     }
     pub fn get_items_repeating(&self, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|i| {
-            i.has_due() && i.due().is_recurring && i.checked() == checked && !i.was_archived()
-        }).collect()
+        self.items()
+            .iter()
+            .filter(|i| {
+                i.has_due() && i.due().is_recurring && i.checked() == checked && !i.was_archived()
+            })
+            .cloned()
+            .collect()
     }
     pub fn get_items_by_date_range(
         &self,
@@ -375,27 +463,38 @@ impl Store {
         end_date: &NaiveDateTime,
         checked: bool,
     ) -> Vec<Item> {
-        self.items().iter().filter(|s| self.valid_item_by_date_range(s, start_date, end_date, checked)).collect()
+        self.items()
+            .iter()
+            .filter(|s| self.valid_item_by_date_range(s, start_date, end_date, checked))
+            .cloned()
+            .collect()
     }
     pub fn get_items_by_month(&self, date: &NaiveDateTime, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|s| self.valid_item_by_month(s, date, checked)).cloned().collect()
+        self.items()
+            .iter()
+            .filter(|s| self.valid_item_by_month(s, date, checked))
+            .cloned()
+            .collect()
     }
     pub fn get_items_pinned(&self, checked: bool) -> Vec<Item> {
         self.items()
             .iter()
             .filter(|i| i.pinned == Some(1) && i.checked() && !i.was_archived())
+            .cloned()
             .collect()
     }
     pub fn get_items_by_priority(&self, priority: i32, checked: bool) -> Vec<Item> {
         self.items()
             .iter()
             .filter(|i| i.priority == Some(priority) && i.checked() && !i.was_archived())
+            .cloned()
             .collect()
     }
     pub fn get_items_with_reminders(&self) -> Vec<Item> {
         self.items()
             .iter()
             .filter(|i| i.has_reminders() && i.completed() && !i.was_archived())
+            .cloned()
             .collect()
     }
     pub fn get_items_by_scheduled(&self, checked: bool) -> Vec<Item> {
@@ -407,14 +506,23 @@ impl Store {
                     && i.checked()
                     && i.due().datetime() > Local::now().naive_local()
             })
+            .cloned()
             .collect()
     }
 
     pub fn get_items_unlabeled(&self, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|s| s.labels().len() <= 0 && s.checked() == checked && !s.was_archived()).collect()
+        self.items()
+            .iter()
+            .filter(|s| s.labels().len() <= 0 && s.checked() == checked && !s.was_archived())
+            .cloned()
+            .collect()
     }
     pub fn get_items_no_parent(&self, checked: bool) -> Vec<Item> {
-        self.items().iter().filter(|i| !i.was_archived() && i.checked() == checked && !i.has_parent()).cloned().collect()
+        self.items()
+            .iter()
+            .filter(|i| !i.was_archived() && i.checked() == checked && !i.has_parent())
+            .cloned()
+            .collect()
     }
     pub fn valid_item_by_date(&self, item: &Item, date: &NaiveDateTime, checked: bool) -> bool {
         if item.has_due() || item.was_archived() {
@@ -443,7 +551,9 @@ impl Store {
             return false;
         }
 
-        item.checked() == checked && item.due().datetime().month() == date.month() && item.due().datetime().year() == date.year()
+        item.checked() == checked
+            && item.due().datetime().month() == date.month()
+            && item.due().datetime().year() == date.year()
     }
 
     pub fn get_items_by_overdeue_view(&self, checked: bool) -> Vec<Item> {
@@ -457,6 +567,7 @@ impl Store {
                     && i.due().datetime() < date_now
                     && !DateTime::default().is_same_day(&i.due().datetime(), &date_now)
             })
+            .cloned()
             .collect()
     }
 
@@ -473,6 +584,7 @@ impl Store {
                             .map(|desc| desc.to_lowercase().contains(&search_lower))
                             .unwrap_or(false))
             })
+            .cloned()
             .collect()
     }
 
@@ -523,8 +635,8 @@ impl Store {
     }
     pub fn get_labels_by_item_labels(&self, labels: &str) -> Vec<Label> {
         labels
-            .split(";")
-            .filter(|id| self.get_label(id).is_some())
+            .split(';')
+            .filter_map(|id| self.get_label(id))
             .collect()
     }
     pub fn get_label_by_name(&self, name: &str, source_id: &str) -> Option<Label> {
@@ -542,9 +654,10 @@ impl Store {
         self.labels()
             .iter()
             .filter(|l| l.source_id.as_deref() == Some(id))
+            .cloned()
             .collect()
     }
-    pub fn get_all_labels_by_search(&self, search_text: &str) -> Vec<Section> {
+    pub fn get_all_labels_by_search(&self, search_text: &str) -> Vec<Label> {
         let search_lover = search_text.to_lowercase();
         self.labels()
             .iter()
@@ -553,22 +666,26 @@ impl Store {
                     .as_deref()
                     .map(|name| name.contains(&search_lover))
                     .unwrap_or(false)
-                    && !s.is_archived()
             })
+            .cloned()
             .collect()
     }
     // reminders
     pub fn reminders(&self) -> Vec<Reminder> {
         Database::default().get_reminders_collection()
     }
-    pub fn get_reminder(&self, id: String) -> Option<Reminder> {
-        self.reminders().iter().find(|s| s.id == Some(id)).cloned()
+    pub fn get_reminder(&self, id: &str) -> Option<Reminder> {
+        self.reminders()
+            .iter()
+            .find(|s| s.id.as_deref() == Some(id))
+            .cloned()
     }
 
-    pub fn get_reminders_by_item(&self, item: Item) -> Vec<Reminder> {
+    pub fn get_reminders_by_item(&self, item: &Item) -> Vec<Reminder> {
         self.reminders()
             .iter()
             .filter(|s| s.item_id == item.id)
+            .cloned()
             .collect()
     }
     pub fn insert_reminder(&self, reminder: Reminder) {

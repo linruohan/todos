@@ -3,10 +3,9 @@ use uuid::Uuid;
 use crate::Store;
 
 use super::Item;
-use crate::objects::BaseTrait;
 use crate::schema::attachments;
-use diesel::prelude::*;
 use diesel::Queryable;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 #[derive(
     QueryableByName, Queryable, PartialEq, Insertable, Clone, Eq, Selectable, Serialize, Debug,
@@ -38,11 +37,14 @@ impl Attachment {
             file_path,
         }
     }
+    pub fn id(&self) -> &str {
+        self.id.as_deref().unwrap_or("")
+    }
     pub fn delete(&self) {
-        Store::instance().delete_attachment(self.clone());
+        Store::instance().delete_attachment(self);
     }
     pub fn item(&self) -> Item {
-        Store::instance().get_item(self.item_id()).unwrap()
+        Store::instance().get_item(self.id()).unwrap()
     }
     pub fn set_item(&mut self, new_item_id: String) {
         self.item_id = Some(new_item_id);

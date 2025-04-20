@@ -1,9 +1,15 @@
-use crate::schema::{attachments, items, labels, projects, queue, reminders, sections, sources};
 use crate::Source;
-use diesel::prelude::*;
-use diesel::r2d2::{self, ConnectionManager};
+use crate::schema::{attachments, items, labels, projects, queue, reminders, sections, sources};
 use diesel::QueryDsl;
 use diesel::SqliteConnection;
+use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
+use diesel::{
+    Table,
+    expression::BoxableExpression,
+    query_builder::{AsChangeset, IntoUpdateTarget},
+    sql_types::Bool,
+};
 use dotenvy::dotenv;
 use once_cell::sync::OnceCell;
 use std::env;
@@ -11,7 +17,7 @@ use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 
-use super::{Attachment, BaseObjectTrait, Item, Label, Project, Reminder};
+use super::{Attachment, BaseTrait, Item, Label, Project, Reminder};
 use super::{Queue, Section};
 pub type DbPool = Arc<r2d2::Pool<ConnectionManager<SqliteConnection>>>;
 // 定义全局的数据库连接池
@@ -44,18 +50,20 @@ impl Database {
         pool.get().expect("Failed to get connection from pool")
     }
 
-    fn update<T, F, S>(&self, table: T, filter: F, set: S) -> bool
+    fn update<F, S>(&self, filter_source: F, set: S) -> bool
     where
-        T: diesel::Table,
-        F: diesel::expression::BoxableExpression<
-            T,
-            diesel::sqlite::Sqlite,
-            SqlType=diesel::sql_types::Bool,
-        >,
-        S: diesel::query_builder::IntoUpdateTarget,
+        F: diesel::query_builder::IntoUpdateTarget + diesel::associations::HasTable + Send,
+        S: diesel::AsChangeset<Target = F::Table> + Send,
+        F::Table: Table,
+        F::WhereClause: Send,
     {
-        let mut conn = self.get_conn();
-        diesel::update(table.filter(filter)).set(set).execute(&mut conn).is_ok()
+        // let mut conn = self.get_conn();
+        // diesel::update(filter_source)
+        //     .set(set)
+        //     .execute(&mut conn)
+        //     .is_ok()
+        todo!();
+        false
     }
     pub fn clear_database(&self, pool: DbPool) -> Result<(), String> {
         // 1 关闭连接池
@@ -103,7 +111,7 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn update_source(&self, source: Source) -> bool {
+    pub fn update_source(&self, source: &Source) -> bool {
         let mut conn = self.get_conn();
         diesel::update(sources::table.filter(sources::id.eq(&source.id)))
             .set((
@@ -134,7 +142,7 @@ impl Database {
     pub fn insert_item(&self, item: &Item) -> bool {
         let mut conn = self.get_conn();
         diesel::insert_into(items::table)
-            .values(&item)
+            .values(item)
             .execute(&mut conn)
             .is_ok()
     }
@@ -202,30 +210,34 @@ impl Database {
         .is_ok()
     }
     pub fn update_project_item_id(&self, cur_id: String, new_id: String) -> bool {
-        self.update(
-            items::table,
-            items::project_id.eq(&cur_id),
-            items::project_id.eq(&new_id),
-        )
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::project_id.eq(&cur_id)))
+            .set(items::project_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
     }
     pub fn update_section_item_id(&self, cur_id: String, new_id: String) -> bool {
-        self.update(
-            items::table,
-            items::section_id.eq(&cur_id),
-            items::section_id.eq(&new_id),
-        )
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::section_id.eq(&cur_id)))
+            .set(items::section_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
     }
 
     pub fn update_item_id(&self, cur_id: String, new_id: String) -> bool {
-        self.update(items::table, items::id.eq(&cur_id), items::id.eq(&new_id))
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::id.eq(&cur_id)))
+            .set(items::id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
     }
 
     pub fn update_item_child_id(&self, cur_id: String, new_id: String) -> bool {
-        self.update(
-            items::table,
-            items::parent_id.eq(&cur_id),
-            items::parent_id.eq(&new_id),
-        )
+        let mut conn = self.get_conn();
+        diesel::update(items::table.filter(items::parent_id.eq(&cur_id)))
+            .set(items::parent_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
     }
     // attachments
     pub fn get_attachments_collection(&self) -> Vec<Attachment> {
@@ -239,16 +251,18 @@ impl Database {
         .load::<Attachment>(&mut conn)
         .expect("Failed to get Sources")
     }
-    pub fn insert_attachment(&self, attachment: Attachment) -> bool {
+    pub fn insert_attachment(&self, attachment: &Attachment) -> bool {
         let mut conn = self.get_conn();
         diesel::insert_into(attachments::table)
-            .values(&attachment)
+            .values(attachment)
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn delete_attachment(&self, attachment: Attachment) -> bool {
+    pub fn delete_attachment(&self, attachment: &Attachment) -> bool {
         let mut conn = self.get_conn();
-        diesel::delete(attachments::table.filter(attachments::id.eq(&attachment.id))).execute(&mut conn).is_ok()
+        diesel::delete(attachments::table.filter(attachments::id.eq(&attachment.id)))
+            .execute(&mut conn)
+            .is_ok()
     }
     // projects
     pub(crate) fn get_projects_collection(&self) -> Vec<Project> {
@@ -264,17 +278,17 @@ impl Database {
     pub fn insert_project(&self, project: &Project) -> bool {
         let mut conn = self.get_conn();
         diesel::insert_into(projects::table)
-            .values(&project)
+            .values(project)
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn delete_project(&self, project: Project) -> bool {
+    pub fn delete_project(&self, project: &Project) -> bool {
         let mut conn = self.get_conn();
         diesel::delete(projects::table.filter(projects::id.eq(&project.id)))
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn delete_project_db(&self, project: Project) -> bool {
+    pub fn delete_project_db(&self, project: &Project) -> bool {
         let mut conn = self.get_conn();
         let b1 = diesel::delete(projects::table.filter(projects::id.eq(&project.id)))
             .execute(&mut conn)
@@ -422,14 +436,14 @@ impl Database {
         .load::<Section>(&mut conn)
         .expect("Failed to get Section")
     }
-    pub fn insert_section(&self, section: Section) -> bool {
+    pub fn insert_section(&self, section: &Section) -> bool {
         let mut conn = self.get_conn();
         diesel::insert_into(sections::table)
-            .values(&section)
+            .values(section)
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn delete_section(&self, section: Section) -> bool {
+    pub fn delete_section(&self, section: &Section) -> bool {
         let mut conn = self.get_conn();
         diesel::delete(sections::table.filter(sections::id.eq(&section.id)))
             .execute(&mut conn)
@@ -468,7 +482,7 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn archive_section(&self, section: Section) -> bool {
+    pub fn archive_section(&self, section: &Section) -> bool {
         let mut conn = self.get_conn();
         diesel::update(sections::table.filter(sections::id.eq(&section.id)))
             .set((sections::is_archived.eq(section.is_archived),))
@@ -476,11 +490,11 @@ impl Database {
             .is_ok()
     }
     pub fn update_project_section_id(&self, cur_id: String, new_id: String) -> bool {
-        self.update(
-            sections::table,
-            sections::project_id.eq(&cur_id),
-            sections::project_id.eq(&new_id),
-        )
+        let mut conn = self.get_conn();
+        diesel::update(sections::table.filter(sections::project_id.eq(&cur_id)))
+            .set(sections::project_id.eq(&new_id))
+            .execute(&mut conn)
+            .is_ok()
     }
     pub fn update_section_id(&self, cur_id: String, new_id: String) -> bool {
         let mut conn = self.get_conn();
