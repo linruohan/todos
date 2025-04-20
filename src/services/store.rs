@@ -1,5 +1,5 @@
 use crate::enums::ObjectType;
-use crate::objects::{BaseObject, BaseTrait};
+use crate::objects::{BaseObject, BaseTrait, item};
 use crate::utils::DateTime;
 use crate::{Attachment, Database, Item, Label, Project, Reminder, Section, Source};
 use chrono::{Datelike, Local, NaiveDateTime};
@@ -305,7 +305,7 @@ impl Store {
         // Services.EventBus.get_default ().update_items_position (item.project_id, item.section_id);
     }
 
-    pub fn update_item(&self, item: &Item, update_id: String) {
+    pub fn update_item(&self, item: &Item, update_id: &str) {
         if Database::default().update_item(item) {
             // self.item_updated(item.clone(), update_id.clone());
         }
@@ -356,7 +356,61 @@ impl Store {
             self.archive_item(subitem, archived);
         }
     }
-
+    pub fn item_updated(&self, item: &Item, update_id: &str) {
+        todo!()
+    }
+    pub fn complete_item(&self, item: &Item) {
+        if Database::default().complete_item(item) {
+            for mut subitem in self.get_subitems(item) {
+                subitem.checked = item.checked;
+                subitem.completed_at = item.completed_at.clone();
+                self.complete_item(&subitem);
+            }
+            item.update("");
+            self.item_updated(item, "");
+            todo!();
+            // Services.EventBus.get_default ().checked_toggled (item, old_checked);
+            if let Some(mut parent) = item.parent().filter(|_| !item.checked()) {
+                parent.checked = item.checked;
+                parent.completed_at = item.completed_at.clone();
+                self.complete_item(&parent);
+            }
+        }
+    }
+    pub fn update_item_id(&self, cur_id: &str, new_id: &str) {
+        if Database::default().update_item_id(cur_id, new_id) {
+            for mut item in self.items() {
+                if item.id.as_deref() == Some(cur_id) {
+                    item.id = Some(new_id.to_string());
+                }
+            }
+            if Database::default().update_item_child_id(cur_id, new_id) {
+                for mut item in self.items() {
+                    if item.parent_id.as_deref() == Some(cur_id) {
+                        item.parent_id = Some(new_id.to_string());
+                    }
+                }
+            }
+        }
+    }
+    pub fn next_item_child_order(&self, project_id: &str, section_id: &str) -> i32 {
+        // self.items()
+        // .iter()
+        // .filter(|i|
+        //     i.project_id.as_deref() == Some(project_id) &&
+        //     i.section_id.as_deref() == Some(section_id)
+        // )
+        // .count() as i32
+        self.items().iter().fold(0, |sub, i| {
+            if i.project_id.as_deref() == Some(project_id)
+                && i.section_id.as_deref() == Some(section_id)
+            {
+                sub + 1
+            } else {
+                sub
+            }
+        })
+    }
     pub fn get_item(&self, id: &str) -> Option<Item> {
         self.items()
             .iter()

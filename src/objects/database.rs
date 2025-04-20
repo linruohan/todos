@@ -197,14 +197,14 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn complete_item(&self, item: Item) -> bool {
+    pub fn complete_item(&self, item: &Item) -> bool {
         let mut conn = self.get_conn();
         diesel::update(
             items::table.filter(items::id.eq(&item.id).or(items::parent_id.eq(&item.id))),
         )
         .set((
-            items::completed_at.eq(item.completed_at),
-            items::checked.eq(item.checked),
+            items::completed_at.eq(&item.completed_at),
+            items::checked.eq(&item.checked),
         ))
         .execute(&mut conn)
         .is_ok()
@@ -224,7 +224,7 @@ impl Database {
             .is_ok()
     }
 
-    pub fn update_item_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_item_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(items::table.filter(items::id.eq(&cur_id)))
             .set(items::id.eq(&new_id))
@@ -232,7 +232,7 @@ impl Database {
             .is_ok()
     }
 
-    pub fn update_item_child_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_item_child_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(items::table.filter(items::parent_id.eq(&cur_id)))
             .set(items::parent_id.eq(&new_id))

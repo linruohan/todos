@@ -284,9 +284,9 @@ impl Item {
         todo!()
     }
     pub fn update_local(&self) {
-        Store::instance().update_item(self, "".to_string());
+        Store::instance().update_item(self, "");
     }
-    pub fn update(&self, update_id: String) {
+    pub fn update(&self, update_id: &str) {
         if let Some(project) = self.project() {
             match project.source_type() {
                 SourceType::LOCAL => {
