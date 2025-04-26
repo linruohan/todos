@@ -91,7 +91,13 @@ impl Item {
     generate_accessors!(section_id: Option<String>);
     generate_accessors!(project_id: Option<String>);
     generate_accessors!(parent_id: Option<String>);
-    generate_accessors!(priority: Option<i32>);
+    // generate_accessors!(priority: Option<i32>);
+    pub fn priority(&self) -> i32 {
+        self.priority.unwrap_or(constants::PRIORITY_4)
+    }
+    pub fn set_priority(&mut self, priority: i32) {
+        self.priority = Some(priority);
+    }
     generate_accessors!(child_order: Option<i32>);
     generate_accessors!(@bool checked: Option<i32>);
     generate_accessors!(@bool is_deleted: Option<i32>);
@@ -100,7 +106,24 @@ impl Item {
     generate_accessors!(@bool pinned: Option<i32>);
     generate_accessors!(@labels labels: Option<String>);
     generate_accessors!(extra_data: Option<String>);
-    generate_accessors!(item_type: Option<String>);
+    // generate_accessors!(item_type: Option<String>);
+    pub fn item_type(&self) -> ItemType {
+        self.item_type
+            .as_deref()
+            .and_then(|s| serde_json::from_str::<ItemType>(s).ok())
+            .unwrap_or(ItemType::TASK)
+    }
+    pub fn set_item_type(&mut self, item_type: ItemType) {
+        self.item_type = Some(item_type.to_string())
+    }
+
+    pub fn activate_name_editable(&self) -> bool {
+        false
+    }
+    pub fn set_activate_name_editable(&self, v: bool) {
+        todo!();
+    }
+
     pub(crate) fn has_labels(&self) -> bool {
         self.labels().len() > 0
     }
@@ -130,34 +153,40 @@ impl Item {
     pub fn short_content(&self) -> String {
         Util::get_default().get_short_name(self.content.clone(), 0)
     }
-    pub fn priority_icon(&self) -> String {
+    pub fn priority_icon(&self) -> &str {
         match self.priority {
-            Some(constants::PRIORITY_1) => "priority-icon-1".to_string(),
-            Some(constants::PRIORITY_2) => "priority-icon-2".to_string(),
-            Some(constants::PRIORITY_3) => "priority-icon-3".to_string(),
-            _ => "planner-flag".to_string(),
+            Some(constants::PRIORITY_1) => "priority-icon-1",
+            Some(constants::PRIORITY_2) => "priority-icon-2",
+            Some(constants::PRIORITY_3) => "priority-icon-3",
+            _ => "planner-flag",
         }
     }
     pub fn has_reminders(&self) -> bool {
         self.reminders().len() > 0
     }
 
-    pub fn priority_color(&self) -> String {
+    pub fn priority_color(&self) -> &str {
         match self.priority {
-            Some(constants::PRIORITY_1) => "#ff7066".to_string(),
-            Some(constants::PRIORITY_2) => "#ff9914".to_string(),
-            Some(constants::PRIORITY_3) => "#5297ff".to_string(),
-            _ => "@text_color".to_string(),
+            Some(constants::PRIORITY_1) => "#ff7066",
+            Some(constants::PRIORITY_2) => "#ff9914",
+            Some(constants::PRIORITY_3) => "#5297ff",
+            _ => "@text_color",
         }
     }
 
-    pub fn priority_text(&self) -> String {
+    pub fn priority_text(&self) -> &str {
         match self.priority {
-            Some(constants::PRIORITY_1) => "Priority 1: high".to_string(),
-            Some(constants::PRIORITY_2) => "Priority 2: medium".to_string(),
-            Some(constants::PRIORITY_3) => "Priority 3: low".to_string(),
-            _ => "Priority 4: none".to_string(),
+            Some(constants::PRIORITY_1) => "Priority 1: high",
+            Some(constants::PRIORITY_2) => "Priority 2: medium",
+            Some(constants::PRIORITY_3) => "Priority 3: low",
+            _ => "Priority 4: none",
         }
+    }
+    pub fn custom_order(&self) -> bool {
+        false
+    }
+    pub fn set_custom_order(&mut self, order: bool) {
+        todo!();
     }
     pub fn pinned_icon(&self) -> String {
         match self.pinned {
@@ -198,6 +227,12 @@ impl Item {
             .as_deref()
             .and_then(|id| Store::instance().get_item(id))
             .is_some()
+    }
+    pub fn show_item(&self) -> bool {
+        false
+    }
+    pub fn set_show_item(&mut self, v: bool) {
+        todo!();
     }
     pub fn ics(&self) -> &str {
         // Services.Todoist.get_default ().get_string_member_by_object (extra_data, "ics")

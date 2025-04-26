@@ -1,7 +1,8 @@
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
-#[derive(Debug, Clone, PartialEq, EnumString)]
+#[derive(Debug, Clone, PartialEq, EnumString, Serialize, Deserialize)]
 #[strum(serialize_all = "camelCase")] // 自动处理连字符格式
 pub enum ItemType {
     TASK,
