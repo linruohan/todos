@@ -5,12 +5,18 @@ pub mod constants;
 pub mod enums;
 pub mod objects;
 pub mod services;
+use paste::paste;
+
 pub mod utils;
 use chrono::Datelike;
-pub(crate) use objects::{Attachment, Item, Label, Project, Reminder, Section, Source};
-pub(crate) use objects::{BaseObject, BaseTrait, Database, schema};
+pub(crate) use objects::{
+    Attachment, BaseObject, BaseTrait, Database, Item, Label, Project, Reminder, Section, Source,
+    ToBool, schema,
+};
 pub(crate) use services::{Store, load_config};
 pub(crate) use utils::Util;
+#[macro_use]
+extern crate paste;
 fn main() -> Result<(), Box<dyn Error>> {
     // let db = Database::default();
     // db.get_sources_collection();

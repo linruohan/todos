@@ -19,7 +19,7 @@ pub mod source;
 use std::sync::Arc;
 
 pub(crate) use attachment::Attachment;
-pub(crate) use base::BaseTrait;
+pub(crate) use base::*;
 pub(crate) use base_object::BaseObject;
 pub(crate) use color::Color;
 pub(crate) use database::Database;

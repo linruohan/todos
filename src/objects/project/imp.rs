@@ -48,6 +48,12 @@ impl Project {
 }
 
 impl Project {
+    pub fn is_deleted(&self) -> bool {
+        self.is_deleted.unwrap_or(0) > 0
+    }
+    pub fn is_favorite(&self) -> bool {
+        self.is_favorite.unwrap_or(0) > 0
+    }
     pub(crate) fn is_inbox_project(&self) -> bool {
         todo!()
     }

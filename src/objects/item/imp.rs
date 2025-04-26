@@ -1,8 +1,11 @@
 use crate::enums::{ItemType, SourceType};
-use crate::objects::{BaseTrait, DueDate};
+use crate::objects::{BaseTrait, DueDate, ToBool};
 use crate::schema::items;
 use crate::utils::{self, EMPTY_DATETIME};
-use crate::{Attachment, Label, Project, Reminder, Section, Source, Store, Util, constants};
+use crate::{
+    Attachment, Label, Project, Reminder, Section, Source, Store, Util, constants,
+    generate_accessors,
+};
 use chrono::{Local, NaiveDateTime};
 use derive_builder::Builder;
 use diesel::Queryable;
@@ -79,32 +82,32 @@ impl Item {
 }
 
 impl Item {
+    generate_accessors!(content:String);
+    generate_accessors!(description: Option<String>);
+    generate_accessors!(@due due: Option<String>);
+    generate_accessors!(@nativedatetime added_at: Option<String>);
+    generate_accessors!(@nativedatetime completed_at: Option<String>);
+    generate_accessors!(@nativedatetime updated_at: Option<String>);
+    generate_accessors!(section_id: Option<String>);
+    generate_accessors!(project_id: Option<String>);
+    generate_accessors!(parent_id: Option<String>);
+    generate_accessors!(priority: Option<i32>);
+    generate_accessors!(child_order: Option<i32>);
+    generate_accessors!(@bool checked: Option<i32>);
+    generate_accessors!(@bool is_deleted: Option<i32>);
+    generate_accessors!(day_order: Option<i32>);
+    generate_accessors!(@bool collapsed: Option<i32>);
+    generate_accessors!(@bool pinned: Option<i32>);
+    generate_accessors!(@labels labels: Option<String>);
+    generate_accessors!(extra_data: Option<String>);
+    generate_accessors!(item_type: Option<String>);
     pub(crate) fn has_labels(&self) -> bool {
         self.labels().len() > 0
     }
     pub fn has_label(&self, id: &str) -> bool {
         self.get_label(id).is_some()
     }
-    pub fn checked(&self) -> bool {
-        self.checked.unwrap_or(0) > 0
-    }
-    pub fn pinned(&self) -> bool {
-        self.pinned.unwrap_or(0) > 0
-    }
-    pub fn due(&self) -> DueDate {
-        match &self.due {
-            Some(due) => serde_json::from_str::<DueDate>(&due).expect("failed to convert due date"),
-            None => DueDate::default(),
-        }
-    }
-    pub fn labels(&self) -> Vec<Label> {
-        match self.labels.clone() {
-            Some(labels) => {
-                serde_json::from_str::<Vec<Label>>(&labels).expect("failed to convert labels")
-            }
-            None => Vec::<Label>::new(),
-        }
-    }
+
     pub fn exists_project(&self, project: &Project) -> bool {
         if project.id == self.project_id {
             return true;

@@ -162,7 +162,7 @@ impl Store {
     pub fn delete_project(&self, project: &Project) {
         let project_id = project.id_string();
         if Database::default().delete_project(project) {
-            for section in self.get_sections_by_project(&project_id) {
+            for section in self.get_sections_by_project(project) {
                 self.delete_section(&section);
             }
             for item in self.get_items_by_project(project) {
@@ -173,13 +173,40 @@ impl Store {
             }
         }
     }
+    pub fn update_project_id(&self, cur_id: &str, new_id: &str) {
+        if Database::default().update_project_id(cur_id, new_id) {
+            if let Some(mut project) = self.get_project(cur_id) {
+                project.id = Some(new_id.to_string());
+            }
+            if Database::default().update_project_section_id(cur_id, new_id) {
+                for mut section in self.sections() {
+                    if section.project_id.as_deref() == Some(cur_id) {
+                        section.project_id = Some(new_id.to_string());
+                    }
+                }
+            }
+            if Database::default().update_project_item_id(cur_id, new_id) {
+                for mut item in self.items() {
+                    if item.project_id.as_deref() == Some(cur_id) {
+                        item.project_id = Some(new_id.to_string());
+                    }
+                }
+            }
+        }
+    }
+    pub fn next_project_child_order(&self, source: &Source) -> i32 {
+        self.projects()
+            .iter()
+            .filter(|i| i.source_id == source.id && !i.is_deleted())
+            .count() as i32
+    }
 
     pub fn archive_project(&self, project: &Project) {
         if Database::default().archive_project(project.clone()) {
             for item in self.get_items_by_project(project) {
-                self.archive_item(item, project.is_archived());
+                self.archive_item(&item, project.is_archived());
             }
-            for section in self.get_sections_by_project(project.id()) {
+            for section in self.get_sections_by_project(project) {
                 let mut sec = section.clone();
                 sec.is_archived = project.is_archived;
                 self.archive_section(&sec);
@@ -228,10 +255,17 @@ impl Store {
             .find(|s| s.id.as_deref() == Some(id))
             .cloned()
     }
-    pub fn get_sections_by_project(&self, id: &str) -> Vec<Section> {
+    pub fn get_sections_by_project(&self, project: &Project) -> Vec<Section> {
         self.sections()
             .iter()
-            .filter(|s| s.project_id.as_deref() == Some(id))
+            .filter(|s| s.project_id == project.id)
+            .cloned()
+            .collect()
+    }
+    pub fn get_sections_archived_by_project(&self, project: &Project) -> Vec<Section> {
+        self.sections()
+            .iter()
+            .filter(|s| s.project_id == project.id && s.was_archived())
             .cloned()
             .collect()
     }
@@ -249,22 +283,56 @@ impl Store {
             .cloned()
             .collect()
     }
+    pub fn update_section(&self, section: &Section) {
+        if Database::default().update_section(section) {
+            // section.updated ();
+            todo!()
+        }
+    }
+    pub fn move_section(&self, section: &Section, project_id: &str) {
+        if Database::default().move_section(section, project_id) {
+            if Database::default().move_section_items(section) {
+                for mut item in section.items() {
+                    item.project_id = Some(project_id.to_string());
+                }
+                // section_moved(section, old_project_id);
+            }
+        }
+    }
+    pub fn update_section_id(&self, cur_id: &str, new_id: &str) {
+        if Database::default().update_section_id(cur_id, new_id) {
+            for mut section in self.sections() {
+                if section.id.as_deref() == Some(cur_id) {
+                    section.id = Some(new_id.to_string());
+                }
+            }
+            if Database::default().update_section_item_id(cur_id, new_id) {
+                for mut item in self.items() {
+                    if item.section_id.as_deref() == Some(cur_id) {
+                        item.section_id = Some(new_id.to_string());
+                    }
+                }
+            }
+        }
+    }
     pub fn archive_section(&self, section: &Section) {
         if Database::default().archive_section(section) {
             for item in self.get_items_by_section(section.id()) {
-                self.delete_item(&item);
+                self.archive_item(&item, section.is_archived());
             }
-            // section.archived ();
-            // section_updated (section);
-            // section.section_count_updated ();
-            // section.project.section_count_updated ();
+            if section.is_archived() {
+                section.archived();
+                // section_archived(section);
+            } else {
+                section.unarchived();
+                // section_unarchived (section);
+            }
         }
     }
     pub fn insert_section(&self, section: &Section) {
         if Database::default().insert_section(section) {
             // self.sections().push(section.clone());
-            // section_added (section);
-            // section.project.section_count_updated ();
+            // section.project.section_added (section);
         }
     }
     pub fn delete_section(&self, section: &Section) {
@@ -346,14 +414,14 @@ impl Store {
             }
         }
     }
-    pub fn archive_item(&self, item: Item, archived: bool) {
+    pub fn archive_item(&self, item: &Item, archived: bool) {
         if archived {
             item.archived();
         } else {
             item.unarchived();
         }
-        for subitem in self.get_subitems(&item) {
-            self.archive_item(subitem, archived);
+        for subitem in self.get_subitems(item) {
+            self.archive_item(&subitem, archived);
         }
     }
     pub fn item_updated(&self, item: &Item, update_id: &str) {

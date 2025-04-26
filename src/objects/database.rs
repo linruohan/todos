@@ -209,14 +209,14 @@ impl Database {
         .execute(&mut conn)
         .is_ok()
     }
-    pub fn update_project_item_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_project_item_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(items::table.filter(items::project_id.eq(&cur_id)))
             .set(items::project_id.eq(&new_id))
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn update_section_item_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_section_item_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(items::table.filter(items::section_id.eq(&cur_id)))
             .set(items::section_id.eq(&new_id))
@@ -336,7 +336,7 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn update_project_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_project_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(projects::table.filter(projects::id.eq(&cur_id)))
             .set(projects::id.eq(&new_id))
@@ -449,7 +449,7 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn update_section(&self, section: Section) -> bool {
+    pub fn update_section(&self, section: &Section) -> bool {
         let mut conn = self.get_conn();
         diesel::update(sections::table.filter(sections::id.eq(&section.id)))
             .set((
@@ -468,17 +468,17 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn move_section(&self, section: Section, project_id: String) -> bool {
+    pub fn move_section(&self, section: &Section, project_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(sections::table.filter(sections::id.eq(&section.id)))
             .set((sections::project_id.eq(project_id),))
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn move_section_items(&self, section: Section) -> bool {
+    pub fn move_section_items(&self, section: &Section) -> bool {
         let mut conn = self.get_conn();
         diesel::update(items::table.filter(items::section_id.eq(&section.id)))
-            .set((items::project_id.eq(section.project_id),))
+            .set((items::project_id.eq(section.project_id.as_deref()),))
             .execute(&mut conn)
             .is_ok()
     }
@@ -489,14 +489,14 @@ impl Database {
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn update_project_section_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_project_section_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(sections::table.filter(sections::project_id.eq(&cur_id)))
             .set(sections::project_id.eq(&new_id))
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn update_section_id(&self, cur_id: String, new_id: String) -> bool {
+    pub fn update_section_id(&self, cur_id: &str, new_id: &str) -> bool {
         let mut conn = self.get_conn();
         diesel::update(sections::table.filter(sections::id.eq(&cur_id)))
             .set(sections::id.eq(&new_id))

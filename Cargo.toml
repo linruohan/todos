@@ -9,8 +9,8 @@ edition = "2024"
 # uncomment this line if you run into setup issues
 # axum = { version = "0.8.1", features = ["json"] }
 # axum-macros = "0.5.0"
-anyhow = "1.0.97"
-diesel = { version = "2.2.8", features = [
+anyhow = "1.0.98"
+diesel = { version = "2.2.10", features = [
     "sqlite",
     "returning_clauses_for_sqlite_3_35",
     "r2d2",
@@ -19,7 +19,7 @@ dotenvy = "0.15.7"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 chrono = "0.4.40"
-once_cell = "1.21.1"
+once_cell = "1.21.3"
 chrono-humanize = "0.2"
 uuid = { version = "1.16.0", features = [
     "v4",                # Lets you generate random UUIDs
@@ -33,11 +33,12 @@ config = "0.15.11" # 用于读取配置文件
 # wasm-bindgen-futures = "0.4.49"
 derive_builder = "0.20.2"
 strum = { version = "0.27.1", features = ["derive"] }
-rand = "0.9.0"
+rand = "0.9.1"
+paste = "1.0.15"
 
 [dev-dependencies]
-assert_cmd = "2.0.14"
-tempfile = "3.19.0"
+assert_cmd = "2.0.17"
+tempfile = "3.19.1"
 diesel_migrations = { version = "2.2.0" }
 
 
