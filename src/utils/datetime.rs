@@ -533,15 +533,11 @@ impl DateTime {
     //     return result;
     // }
 
-    pub fn get_markdown_format_date(&self, item: Item) -> String {
-        if (!item.has_due()) {
-            return " ".to_string();
-        }
-
-        return format!(
-            " ({}) ",
-            self.get_relative_date_from_date(&item.due().datetime())
-        );
+    pub fn get_markdown_format_date(&self, item: &Item) -> String {
+        item.due()
+            .datetime()
+            .map(|dt| format!(" ({}) ", self.get_relative_date_from_date(&dt)))
+            .unwrap_or_else(|| " ".to_string())
     }
 
     pub fn get_datetime_no_seconds(&self, datetime: NaiveDateTime) -> NaiveDateTime {

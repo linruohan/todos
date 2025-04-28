@@ -29,9 +29,8 @@ impl DueDate {
             recurrency_supported: false,
         }
     }
-    pub fn datetime(&self) -> NaiveDateTime {
-        // NaiveDateTime::from_str(&self.date)
-        NaiveDateTime::from_str(&self.date).unwrap()
+    pub fn datetime(&self) -> Option<NaiveDateTime> {
+        NaiveDateTime::from_str(&self.date).ok()
     }
     pub fn set_datetime(&mut self, value: NaiveDateTime) {
         self.date = value.format("%Y-%m-%d %H:%M:%S").to_string();
@@ -55,8 +54,10 @@ impl DueDate {
         match self.end_type() {
             RecurrencyEndType::AFTER => self.recurrency_count - 1 <= 0,
             RecurrencyEndType::OnDate => {
-                let next_recurrency: NaiveDateTime =
-                    DateTime::default().next_recurrency(self.datetime().clone(), self.clone());
+                let next_recurrency: NaiveDateTime = self
+                    .datetime()
+                    .map(|dt| DateTime::default().next_recurrency(dt, self.clone()))
+                    .unwrap_or_default();
                 return next_recurrency > self.end_datetime();
             }
             _ => false,

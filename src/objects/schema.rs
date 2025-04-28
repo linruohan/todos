@@ -117,8 +117,7 @@ diesel::table! {
         notify_uid -> Nullable<Integer>,
         item_id -> Nullable<Text>,
         service -> Nullable<Text>,
-        #[sql_name = "type"]
-        type_ -> Nullable<Text>,
+        reminder_type -> Nullable<Text>,
         due -> Nullable<Text>,
         mm_offset -> Nullable<Integer>,
         is_deleted -> Nullable<Integer>,

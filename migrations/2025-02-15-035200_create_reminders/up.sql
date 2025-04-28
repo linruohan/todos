@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS reminders (
     notify_uid INTEGER,
     item_id TEXT,
     service TEXT,
-    type TEXT,
+    reminder_type TEXT,
     due TEXT,
     mm_offset INTEGER,
     is_deleted INTEGER,

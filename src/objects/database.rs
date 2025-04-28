@@ -419,7 +419,7 @@ impl Database {
         .load::<Reminder>(&mut conn)
         .expect("Failed to get reminders")
     }
-    pub fn delete_reminder(&self, reminder: Reminder) -> bool {
+    pub fn delete_reminder(&self, reminder: &Reminder) -> bool {
         let mut conn = self.get_conn();
         diesel::delete(reminders::table.filter(reminders::item_id.eq(&reminder.id)))
             .execute(&mut conn)

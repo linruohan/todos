@@ -1,6 +1,7 @@
-use crate::enums::{ItemType, SourceType};
+use crate::enums::{ItemType, ReminderType, SourceType};
 use crate::objects::{BaseTrait, DueDate, ToBool};
 use crate::schema::items;
+use crate::services::store;
 use crate::utils::{self, EMPTY_DATETIME};
 use crate::{
     Attachment, Label, Project, Reminder, Section, Source, Store, Util, constants,
@@ -198,13 +199,14 @@ impl Item {
         self.checked == Some(1)
     }
     pub fn has_due(&self) -> bool {
-        self.due().datetime() != EMPTY_DATETIME
+        self.due()
+            .datetime()
+            .map_or(false, |dt| dt != EMPTY_DATETIME)
     }
     pub fn has_time(&self) -> bool {
-        if self.due().datetime() == EMPTY_DATETIME {
-            return false;
-        }
-        utils::DateTime::default().has_time(&self.due().datetime())
+        self.due()
+            .datetime()
+            .map_or(false, |dt| utils::DateTime::default().has_time(&dt))
     }
     pub fn completed_date(&self) -> NaiveDateTime {
         self.completed_at
@@ -344,6 +346,64 @@ impl Item {
         self.project()
             .as_ref()
             .map_or(Some(Source::default()), |p| p.source())
+    }
+    pub fn remove_all_relative_reminders(&self) {
+        self.reminders()
+            .iter()
+            .filter(|r| r.reminder_type() == ReminderType::RELATIVE)
+            .for_each(|r| {
+                r.delete();
+            });
+    }
+    fn add_reminder_if_not_exists(&self, reminder: &Reminder) {
+        todo!()
+    }
+    pub fn add_reminder(&self, reminder: &mut Reminder) {
+        reminder.item_id = self.id.clone();
+        if let Some(project) = self.project() {
+            match project.source_type() {
+                SourceType::LOCAL => {
+                    reminder.id = Some(Util::get_default().generate_id());
+                    self.add_reminder_if_not_exists(reminder);
+                }
+                SourceType::TODOIST => {
+                    // Services.Todoist.get_default ().add.begin (reminder, (obj, res) => {
+                    //     HttpResponse response = Services.Todoist.get_default ().add.end (res);
+                    //     loading = false;
+
+                    //     if (response.status) {
+                    //         reminder.id = response.data;
+                    //     } else {
+                    //         reminder.id = Util.get_default ().generate_id (reminder);
+                    //     }
+
+                    //     add_reminder_if_not_exists (reminder);
+                    // });
+                }
+                _ => {}
+            }
+        }
+    }
+    pub fn complete_item(&self) {
+        if let Some(project) = self.project() {
+            match project.source_type() {
+                SourceType::LOCAL => {
+                    Store::instance().complete_item(self);
+                }
+                SourceType::TODOIST => {
+                    // Services.Todoist.get_default ().complete_item (this)
+                }
+                SourceType::CALDAV => {
+                    // Services.CalDAV.Core.get_default ().complete_item (this);
+                    // foreach (Objects.Item subitem in Services.Store.instance ().get_subitems (this)) {
+                    //     subitem.checked = checked;
+                    //     subitem.completed_at = completed_at;
+                    //     subitem.complete_item.begin (old_checked);
+                    // }
+                }
+                _ => {}
+            }
+        }
     }
 }
 

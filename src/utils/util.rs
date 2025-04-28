@@ -1,7 +1,7 @@
 use crate::{constants, objects::Color};
 use rand::Rng;
 use std::collections::HashMap;
-
+use uuid::Uuid;
 pub struct Util {
     pub colors: HashMap<String, Color>,
 }
@@ -164,20 +164,9 @@ impl Util {
     //         );
     //     }
 
-    //     public string generate_id (Objects.BaseObject? base_object = null) {
-    //         if (base_object == null) {
-    //             return Uuid.string_random ();
-    //         }
-
-    //         var collection = Services.Store.instance ().get_collection_by_type (base_object);
-    //         var id = Uuid.string_random ();
-
-    //         if (check_id_exists (collection, id)) {
-    //             return generate_id (base_object);
-    //         }
-
-    //         return id;
-    //     }
+    pub fn generate_id(&self) -> String {
+        Uuid::new_v4().to_string()
+    }
 
     //     private bool check_id_exists (Gee.ArrayList<Objects.BaseObject> items, string id) {
     //         bool returned = false;

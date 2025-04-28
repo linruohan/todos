@@ -642,13 +642,14 @@ impl Store {
             .collect()
     }
     pub fn get_items_by_scheduled(&self, checked: bool) -> Vec<Item> {
+        let now = Local::now().naive_local();
         self.items()
             .iter()
             .filter(|i| {
                 i.has_due()
                     && !i.was_archived()
                     && i.checked()
-                    && i.due().datetime() > Local::now().naive_local()
+                    && i.due().datetime().filter(|d| d > &now).is_some()
             })
             .cloned()
             .collect()
@@ -672,7 +673,11 @@ impl Store {
         if item.has_due() || item.was_archived() {
             return false;
         }
-        item.checked() == checked && DateTime::default().is_same_day(&item.due().datetime(), date)
+        item.checked() == checked
+            && item
+                .due()
+                .datetime()
+                .map_or(false, |dt| DateTime::default().is_same_day(&dt, date))
     }
 
     pub fn valid_item_by_date_range(
@@ -682,34 +687,38 @@ impl Store {
         end_date: &NaiveDateTime,
         checked: bool,
     ) -> bool {
-        if item.has_due() || item.was_archived() {
-            return false;
-        }
-        let date = DateTime::default().get_date_only(&item.due().datetime());
-        let start = DateTime::default().get_date_only(start_date);
-        let end = DateTime::default().get_date_only(end_date);
-        item.checked() == checked && date >= start && date <= end
+        let date_util = DateTime::default();
+
+        !(item.has_due() || item.was_archived())
+            && item.checked() == checked
+            && item.due().datetime().map_or(false, |dt| {
+                let date = date_util.get_date_only(&dt);
+                let start = date_util.get_date_only(start_date);
+                let end = date_util.get_date_only(end_date);
+                date >= start && date <= end
+            })
     }
     pub fn valid_item_by_month(&self, item: &Item, date: &NaiveDateTime, checked: bool) -> bool {
-        if item.has_due() || item.was_archived() {
-            return false;
-        }
-
-        item.checked() == checked
-            && item.due().datetime().month() == date.month()
-            && item.due().datetime().year() == date.year()
+        !(item.has_due() || item.was_archived())
+            && item.checked() == checked
+            && item.due().datetime().map_or(false, |dt| {
+                dt.month() == date.month() && dt.year() == date.year()
+            })
     }
 
     pub fn get_items_by_overdeue_view(&self, checked: bool) -> Vec<Item> {
-        let date_now = Local::now().naive_local();
+        let now = Local::now().naive_local();
+        let date_util = DateTime::default();
+
         self.items()
             .iter()
             .filter(|i| {
                 i.has_due()
                     && !i.was_archived()
                     && i.checked()
-                    && i.due().datetime() < date_now
-                    && !DateTime::default().is_same_day(&i.due().datetime(), &date_now)
+                    && i.due()
+                        .datetime()
+                        .map_or(false, |dt| dt < now && !date_util.is_same_day(&dt, &now))
             })
             .cloned()
             .collect()
@@ -733,12 +742,13 @@ impl Store {
     }
 
     pub fn valid_item_by_overdue(&self, item: Item, checked: bool) -> bool {
-        if !item.has_due() || item.was_archived() {
-            return false;
-        }
-        let date_now = Local::now().naive_local();
-        item.due().datetime() <= date_now
-            && DateTime::default().is_same_day(&item.due().datetime(), &date_now)
+        let now = Local::now().naive_local();
+        let date_util = DateTime::default();
+        !(item.has_due() || item.was_archived())
+            && item
+                .due()
+                .datetime()
+                .map_or(false, |dt| dt <= now && date_util.is_same_day(&dt, &now))
     }
 
     // labels
@@ -840,7 +850,7 @@ impl Store {
             todo!()
         }
     }
-    pub fn delete_reminder(&self, reminder: Reminder) {
+    pub fn delete_reminder(&self, reminder: &Reminder) {
         if Database::default().delete_reminder(reminder) {
             // reminder.deleted ();
             // reminder_deleted (reminder);
