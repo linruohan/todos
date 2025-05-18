@@ -1,10 +1,16 @@
+use crate::load_config;
+use crate::services::settings::AppConfig;
 use crate::{constants, objects::Color};
+use diesel::Connection;
 use rand::Rng;
+use std::borrow::Cow;
 use std::collections::HashMap;
+use std::fmt::Error;
 use uuid::Uuid;
 pub struct Util {
     pub colors: HashMap<String, Color>,
 }
+
 impl Util {
     pub fn get_default() -> Util {
         Self {
@@ -184,159 +190,24 @@ impl Util {
     //         return generate_id ();
     //     }
 
-    //     public string get_encode_text (string text) {
-    //         return text.replace ("&", "%26").replace ("#", "%23");
-    //     }
+    pub fn get_encode_text(text: String) -> String {
+        text.replace("&", "%26").replace("#", "%23")
+    }
 
-    //     public string get_theme_name () {
-    //         string returned = "";
-    //         int appearance_mode = Services.Settings.get_default ().settings.get_enum ("appearance");
-
-    //         switch (appearance_mode) {
-    //             case 0:
-    //                 returned = "Light");
-    //                 break;
-    //             case 1:
-    //                 returned = "Dark");
-    //                 break;
-    //             case 2:
-    //                 returned = "Dark Blue");
-    //                 break;
-    //         }
-
-    //         return returned;
-    //     }
-
-    //     public string get_badge_name () {
-    //         string returned = "";
-    //         int badge_count = Services.Settings.get_default ().settings.get_enum ("badge-count");
-
-    //         switch (badge_count) {
-    //             case 0:
-    //                 returned = "None");
-    //                 break;
-    //             case 1:
-    //                 returned = "Inbox");
-    //                 break;
-    //             case 2:
-    //                 returned = "Today");
-    //                 break;
-    //             case 3:
-    //                 returned = "Today + Inbox");
-    //                 break;
-    //         }
-
-    //         return returned;
-    //     }
-
-    //     public void update_theme () {
-    //         string _css = """
-    //             @define-color window_bg_color %s;
-    //             @define-color popover_bg_color %s;
-    //             @define-color sidebar_bg_color %s;
-    //             @define-color item_border_color %s;
-    //             @define-color upcoming_bg_color %s;
-    //             @define-color upcoming_fg_color %s;
-    //             @define-color selected_color %s;
-    //         """;
-
-    //         int appearance_mode = Services.Settings.get_default ().settings.get_enum ("appearance");
-    //         bool dark_mode = Services.Settings.get_default ().settings.get_boolean ("dark-mode");
-    //         bool system_appearance = Services.Settings.get_default ().settings.get_boolean ("system-appearance");
-
-    //         var granite_settings = Granite.Settings.get_default ();
-
-    //         if (system_appearance) {
-    //             dark_mode = granite_settings.prefers_color_scheme == Granite.Settings.ColorScheme.DARK;
-    //         }
-
-    //         var provider = new Gtk.CssProvider ();
-
-    //         string window_bg_color = "";
-    //         string popover_bg_color = "";
-    //         string sidebar_bg_color = "";
-    //         string item_border_color = "";
-    //         string upcoming_bg_color = "";
-    //         string upcoming_fg_color = "";
-    //         string selected_color = "";
-
-    //         if (dark_mode) {
-    //             if (appearance_mode == 1) {
-    //                 window_bg_color = "#151515";
-    //                 popover_bg_color = "shade(#151515, 1.4)";
-    //                 sidebar_bg_color = "#1e1e1e";
-    //                 item_border_color = "#333333";
-    //                 upcoming_bg_color = "#313234";
-    //                 upcoming_fg_color = "#ededef";
-    //                 selected_color = "@popover_bg_color";
-    //                 Adw.StyleManager.get_default ().color_scheme = Adw.ColorScheme.FORCE_DARK;
-    //             } else if (appearance_mode == 2) {
-    //                 window_bg_color = "#0B0B11";
-    //                 popover_bg_color = "#15151B";
-    //                 sidebar_bg_color = "#15161b";
-    //                 item_border_color = "shade(#333333, 1.35)";
-    //                 upcoming_bg_color = "#313234";
-    //                 upcoming_fg_color = "#ededef";
-    //                 selected_color = "@popover_bg_color";
-    //                 Adw.StyleManager.get_default ().color_scheme = Adw.ColorScheme.FORCE_DARK;
-    //             }
-    //         } else {
-    //             window_bg_color = "#fafafa";
-    //             popover_bg_color = "#ffffff";
-    //             sidebar_bg_color = "#f2f2f2";
-    //             item_border_color = "@borders";
-    //             upcoming_bg_color = "#ededef";
-    //             upcoming_fg_color = "shade(#ededef, 0)";
-    //             selected_color = "alpha(@shade_color, 0.65)";
-    //             Adw.StyleManager.get_default ().color_scheme = Adw.ColorScheme.FORCE_LIGHT;
-    //         }
-
-    //         var css = _css.printf (
-    //             window_bg_color,
-    //             popover_bg_color,
-    //             sidebar_bg_color,
-    //             item_border_color,
-    //             upcoming_bg_color,
-    //             upcoming_fg_color,
-    //             selected_color
-    //         );
-
-    //         provider.load_from_string (css);
-
-    //         Gtk.StyleContext.add_provider_for_display (
-    //             Gdk.Display.get_default (), provider,
-    //             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-    //         );
-
-    //         Services.EventBus.get_default ().theme_changed ();
-    //     }
-
-    //     /**
-    //     * Replaces all line breaks with a space and
-    //     * replaces multiple spaces with a single one.
-    //     */
-    //     private GLib.Regex line_break_to_space_regex = null;
-    //     public string line_break_to_space (string str) {
-    //         if (line_break_to_space_regex == null) {
-    //             try {
-    //                 line_break_to_space_regex = new GLib.Regex ("(^\\s+|\\s+$|\n|\\s\\s+)");
-    //             } catch (GLib.RegexError e) {
-    //                 critical (e.message);
-    //             }
-    //         }
-
-    //         try {
-    //             return line_break_to_space_regex.replace (str, str.length, 0, " ");
-    //         } catch (GLib.RegexError e) {
-    //             warning (e.message);
-    //         }
-
-    //         return str;
-    //     }
-
-    //     public string escape_text (string text) {
-    //         return GLib.Markup.escape_text (text, text.length);
-    //     }
+    pub fn escape_text(text: String) -> String {
+        let mut output = String::with_capacity(text.len() * 2); // 预分配空间
+        for c in text.chars() {
+            match c {
+                '<' => output.push_str("&lt;"),
+                '>' => output.push_str("&gt;"),
+                '&' => output.push_str("&amp;"),
+                '\'' => output.push_str("&apos;"),
+                '"' => output.push_str("&quot;"),
+                _ => output.push(c),
+            }
+        }
+        output
+    }
 
     //     private Gtk.MediaFile soud_medida = null;
     //     public void play_audio () {
@@ -1262,7 +1133,13 @@ impl Util {
         }
     }
 }
-
+/// Get an embedded file as a string.
+pub fn asset_str<A: rust_embed::RustEmbed>(path: &str) -> Cow<'static, str> {
+    match A::get(path).expect(path).data {
+        Cow::Borrowed(bytes) => Cow::Borrowed(std::str::from_utf8(bytes).unwrap()),
+        Cow::Owned(bytes) => Cow::Owned(String::from_utf8(bytes).unwrap()),
+    }
+}
 pub struct RegexMarkdown {
     pub matchs: String,
     pub text: String,
@@ -1275,5 +1152,64 @@ impl RegexMarkdown {
             text,
             extra,
         }
+    }
+}
+
+use std::env;
+use std::fs;
+use std::path::Path;
+use std::path::PathBuf;
+// Truncates an str and adds ellipsis if needed
+pub fn truncate_at(input: &str, max: i32) -> String {
+    let max_len: usize = max as usize;
+    if input.len() > max_len {
+        let truncated = &input[..(max_len - 3)];
+        return format!("{}...", truncated);
+    };
+
+    input.to_string()
+}
+
+// Aux function that creates the folder where the DB should be stored
+// if it doesn't exist
+pub fn verify_db_path(db_folder: &str) -> Result<(), Error> {
+    if !Path::new(db_folder).exists() {
+        // Check if the folder doesn't exist
+        match fs::create_dir(db_folder) {
+            Ok(_) => println!("Folder '{}' created.", db_folder),
+            Err(e) => eprintln!("Error creating folder: {}", e),
+        }
+    }
+    Ok(())
+}
+
+// Get the user's home directory for each platform
+fn get_home() -> String {
+    let home_dir = match env::var("HOME") {
+        Ok(path) => PathBuf::from(path),
+        Err(_) => {
+            // Fallback for Windows and macOS
+            if cfg!(target_os = "windows") {
+                if let Some(userprofile) = env::var("USERPROFILE").ok() {
+                    PathBuf::from(userprofile)
+                } else if let Some(homedrive) = env::var("HOMEDRIVE").ok() {
+                    let homepath = env::var("HOMEPATH").unwrap_or("".to_string());
+                    PathBuf::from(format!("{}{}", homedrive, homepath))
+                } else {
+                    panic!("Could not determine the user's home directory.");
+                }
+            } else if cfg!(target_os = "macos") {
+                let home = env::var("HOME").unwrap_or("".to_string());
+                PathBuf::from(home)
+            } else {
+                panic!("Could not determine the user's home directory.");
+            }
+        }
+    };
+
+    // Convert the PathBuf to a &str
+    match home_dir.to_str() {
+        Some(home_str) => home_str.to_string(),
+        None => panic!("Failed to convert home directory to a string."),
     }
 }

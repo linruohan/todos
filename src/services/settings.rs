@@ -1,7 +1,13 @@
+use crate::utils::asset_str;
 use config::Config;
+use rust_embed::RustEmbed;
 use serde::Deserialize;
-use std::error::Error;
-
+use std::{borrow::Cow, error::Error};
+#[derive(Debug, Deserialize, RustEmbed)]
+#[folder = "assets"]
+#[include = "settings/*"]
+#[exclude = "*.DS_Store"]
+pub struct SettingsAssets;
 #[derive(Debug, Deserialize)]
 pub struct AppConfig {
     pub server: ServerConfig,
@@ -19,11 +25,10 @@ pub struct DatabaseConfig {
     pub url: String,
     pub pool_size: u32,
 }
-pub fn load_config() -> Result<AppConfig, Box<dyn Error>> {
-    let settings = Config::builder()
-        .add_source(config::File::with_name("config")) // 读取 config.toml
-        .build()?;
+pub fn default_settings() -> Cow<'static, str> {
+    asset_str::<SettingsAssets>("settings/settings.json")
+}
 
-    let app_config: AppConfig = settings.try_deserialize()?;
-    Ok(app_config)
+pub fn load_config() -> Result<AppConfig, Box<dyn Error>> {
+    serde_json::from_str::<AppConfig>(&default_settings()).map_err(Into::into)
 }
